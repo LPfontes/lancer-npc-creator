@@ -44,6 +44,12 @@
     "styles/npc-creator.css"
   ],
   "relationships": {
+    "systems": [
+      {
+        "id": "lancer",
+        "type": "system"
+      }
+    ],
     "recommends": [
       {
         "id": "lancer-npcs-basico",
