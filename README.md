@@ -14,14 +14,15 @@ Esta ferramenta se integra nativamente ao diretório de Atores (Actor Directory)
 
 ## 🚀 Como Funciona a Lógica de Compêndio
 
-O módulo opera carregando dados exclusivamente de dois compêndios específicos no método `_renderHTML()`. Isso garante que apenas as características e as personalizadas criadas especificamente pelo usuário sejam importadas para o Criador de PNJ:
+O módulo opera carregando dados de três compêndios específicos no método `_renderHTML()`. Isso garante que as características oficiais, as customizadas no módulo e os itens do mundo sejam importados para o Criador de PNJ:
 
 ```mermaid
 graph TD
     A[Início do Carregamento de Dados] --> B[Carrega do Compêndio: 'lancer-npcs-basico.npc-features']
     B --> C[Carrega do Compêndio Customizado: 'lancer-npc-creator.custom-npc-features']
-    C --> D[Separa e cataloga os documentos por tipo: npc_class, npc_template, npc_feature]
-    D --> E[Renderiza Interface Reativa do Criador]
+    C --> D[Carrega do Compêndio do Mundo: 'world.npc-items']
+    D --> E[Separa e cataloga os documentos por tipo: npc_class, npc_template, npc_feature]
+    E --> F[Renderiza Interface Reativa do Criador]
 ```
 
 ### 1. Compêndio de Características (`lancer-npcs-basico.npc-features`)
@@ -31,6 +32,32 @@ graph TD
 ### 2. Compêndio de Características Customizadas (`lancer-npc-creator.custom-npc-features`)
 *   O módulo carrega as características personalizadas salvas pelo GM diretamente no compêndio criado nativamente pelo próprio módulo.
 *   Quaisquer novas classes de PNJ, modelos adicionais ou características customizadas inseridas ali são mescladas com os registros de forma automática e transparente.
+
+### 3. Compêndio de Itens do Mundo (`world.npc-items`)
+*   O módulo também carrega dinamicamente os itens salvos diretamente no compêndio do próprio mundo (`world.npc-items`).
+*   Isso permite que você traga classes de PNJ, modelos ou recursos definidos especificamente no seu jogo atual diretamente para a interface de criação de forma nativa.
+
+---
+
+## 📖 Como Usar
+
+1. **Requisitos de Compêndio:**
+   Certifique-se de que os dados (Classes de PNJs, Modelos e Características) estejam disponíveis nos compêndios `lancer-npcs-basico.npc-features`, `lancer-npc-creator.custom-npc-features` e `world.npc-items`.
+
+2. **Abrindo o Criador:**
+   * Acesse a aba **Atores (Actors)** na barra lateral do Foundry VTT.
+   * Clique no botão **Criador de PNJ (NPC Creator)** localizado no topo da barra.
+
+3. **Configurando o PNJ:**
+   * **Filtrar por Função:** Se desejar, filtre as classes mostradas pelo seu papel de combate (ex: *Striker*, *Support*, *Defender*).
+   * **Classe Base:** Selecione a classe do PNJ que servirá como base do chassi.
+   * **Patamar (Tier):** Escolha o Patamar de combate (I, II ou III). A grade de atributos do lado direito será recalculada automaticamente na hora.
+   * **Aplicar Modelos (Templates):** Ative um ou mais modelos (como *Elite*, *Ultra*, *Veterano*) para adicionar bônus cumulativos de vida, estrutura, estresse e ativações à criatura.
+   * **Características Opcionais:** Selecione características opcionais na lista para customizar o conjunto de habilidades do PNJ.
+
+4. **Gerando no Mundo:**
+   * Clique em **Gerar PNJ no Mundo** na coluna de preview.
+   * O módulo irá gerar instantaneamente o ator na sua barra lateral, anexar todos os itens e abrir a ficha de PNJ completa pronta para o combate!
 
 ---
 
@@ -51,7 +78,15 @@ graph TD
 
 ## 🛠️ Estrutura do Projeto
 
-*   `module.json`: Manifesto do módulo indicando a dependência do script ESModule, estilos CSS, compatibilidade com o Foundry VTT V13+, definição do compêndio vazio e recomendação do pacote `lancer-npcs-basico`.
-*   `scripts/npc-creator.mjs`: Contém toda a lógica de renderização, listeners de eventos, cálculo de atributos do PNJ e carregamento inteligente dos compêndios.
+*   `module.json`: Manifesto do módulo indicando a dependência do script ESModule, estilos CSS, compatibilidade com o Foundry VTT V13+, definição do compêndio vazio, recomendação de pacotes e registro de idiomas suportados.
+*   `scripts/npc-creator.mjs`: Contém toda a lógica de renderização reativa, listeners de eventos, cálculo dinâmico de atributos do PNJ com `game.i18n` e carregamento inteligente dos compêndios.
 *   `styles/npc-creator.css`: Estilização moderna e reativa inspirada na interface futurista e tática do *Lancer*.
+*   `lang/`: Diretório contendo os arquivos JSON de tradução para a localização dinâmica do criador:
+    *   `pt-BR.json`: Tradução e chaves originais em Português do Brasil.
+    *   `en.json`: Tradução e chaves completas adaptadas em Inglês.
 *   `packs/custom-npc-features/`: Diretório que hospeda o compêndio vazio de itens **`lancer-npc-creator.custom-npc-features`** ("Criador de PNJ - Características Customizadas") disponível nativamente para ser preenchido pelo usuário com suas próprias classes, modelos ou características customizadas.
+
+---
+
+## 🤖 Declaração de Uso de IA / Generative AI Declaration
+Este módulo foi desenvolvido com o auxílio de ferramentas de IA Generativa (como o Antigravity desenvolvido pela Google). Para mais detalhes sobre o escopo e conformidade com as diretrizes do Foundry VTT, consulte a nossa [Declaração de Conteúdo de IA Generativa](file:///c:/Users/lpfon/AppData/Local/FoundryVTT/Data/modules/lancer-npc-creator/GEN-AI-DECLARATION.md).

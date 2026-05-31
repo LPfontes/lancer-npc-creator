@@ -65,6 +65,20 @@ class NpcCreatorApp extends foundry.applications.api.ApplicationV2 {
                 }
             }
 
+            // 3. Carregar do compêndio oficial de itens do próprio sistema Lancer
+            const lancerItemsPack = game.packs.get("world.npc-items");
+            if (lancerItemsPack) {
+                try {
+                    console.log("Lancer NPC Creator | Carregando dados do compêndio: world.npc-items");
+                    const docs = await lancerItemsPack.getDocuments();
+                    allNPCClasses.push(...docs.filter(d => d.type === "npc_class"));
+                    allNPCTemplates.push(...docs.filter(d => d.type === "npc_template"));
+                    allNPCFeatures.push(...docs.filter(d => d.type === "npc_feature"));
+                } catch (err) {
+                    console.warn("Lancer NPC Creator | Erro ao carregar o compêndio world.npc-items:", err);
+                }
+            }
+
             this.classes = allNPCClasses;
             this.templates = allNPCTemplates;
             this.features = allNPCFeatures;
@@ -455,7 +469,7 @@ class NpcCreatorApp extends foundry.applications.api.ApplicationV2 {
         // Lista de Características Ativas (Habilidades do PNJ)
         const featuresSec = document.createElement("div");
         featuresSec.className = "features-section";
-        featuresSec.innerHTML = `<div class="features-title">${game.i18n.format("LANCER_NPC_CREATOR.EquippedFeaturesTitle", {count: activeFeatures.length})}</div>`;
+        featuresSec.innerHTML = `<div class="features-title">${game.i18n.format("LANCER_NPC_CREATOR.EquippedFeaturesTitle", { count: activeFeatures.length })}</div>`;
 
         activeFeatures.forEach(feat => {
             // Limpar marcações markdown de efeito para exibição HTML simples
