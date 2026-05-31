@@ -1,0 +1,37 @@
+name: Publish Release
+
+on:
+  push:
+    tags:
+      - 'v*' # Triggers on tags like v1.0.0, v1.0.1, etc.
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # Required to upload assets to the release
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Create Release Zip
+        run: |
+          # Create a directory matching the module ID
+          mkdir -p lancer-npc-creator
+          
+          # Copy the required assets into the directory
+          cp -r scripts styles packs module.json README.md README-EN.md lancer-npc-creator/
+          
+          # Zip the directory
+          zip -r module.zip lancer-npc-creator/
+
+      - name: Create and Upload GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            module.json
+            module.zip
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
