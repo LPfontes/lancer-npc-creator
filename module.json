@@ -22,10 +22,22 @@
   "packs": [
     {
       "name": "custom-npc-features",
-      "label": "Criador de PNJ - Características Customizadas",
+      "label": "LANCER_NPC_CREATOR.PackCustomFeatures",
       "path": "packs/custom-npc-features",
       "type": "Item",
       "system": "lancer"
+    }
+  ],
+  "languages": [
+    {
+      "lang": "en",
+      "name": "English",
+      "path": "lang/en.json"
+    },
+    {
+      "lang": "pt-BR",
+      "name": "Português (Brasil)",
+      "path": "lang/pt-BR.json"
     }
   ],
   "styles": [

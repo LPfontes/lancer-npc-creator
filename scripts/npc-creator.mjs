@@ -21,7 +21,7 @@ class NpcCreatorApp extends foundry.applications.api.ApplicationV2 {
         classes: ["npc-creator-app-window"],
         position: { width: 1200, height: 800 },
         window: {
-            title: "Criador de PNJ Lancer",
+            title: "LANCER_NPC_CREATOR.AppTitle",
             icon: "fa-solid fa-robot"
         }
     };
@@ -70,7 +70,7 @@ class NpcCreatorApp extends foundry.applications.api.ApplicationV2 {
             this.features = allNPCFeatures;
 
             if (this.classes.length === 0) {
-                ui.notifications.error("Não foi possível carregar nenhuma classe de PNJ ('npc_class') nos compêndios ativos.");
+                ui.notifications.error(game.i18n.localize("LANCER_NPC_CREATOR.ErrorNoClasses"));
             } else {
                 console.log(`Lancer NPC Creator | Sucesso ao inicializar. Encontrados: ${this.classes.length} classes, ${this.templates.length} templates, ${this.features.length} características.`);
             }
@@ -104,7 +104,7 @@ class NpcCreatorApp extends foundry.applications.api.ApplicationV2 {
 
         const selectedClass = filteredClasses.find(c => c.system.lid === this.selectedClassLid) || this.classes.find(c => c.system.lid === this.selectedClassLid);
         if (!selectedClass) {
-            container.innerHTML = `<div class="error-panel">Nenhuma classe de PNJ encontrada. Certifique-se de que pelo menos um compêndio contendo itens do Lancer está ativo.</div>`;
+            container.innerHTML = `<div class="error-panel">${game.i18n.localize("LANCER_NPC_CREATOR.NoClassesFound")}</div>`;
             return;
         }
 
@@ -204,7 +204,7 @@ class NpcCreatorApp extends foundry.applications.api.ApplicationV2 {
         // Seletor de Função (Filtro)
         const filterGroup = document.createElement("div");
         filterGroup.className = "form-group";
-        filterGroup.innerHTML = `<label for="role-filter-select">Filtrar por Função (Tipo)</label>`;
+        filterGroup.innerHTML = `<label for="role-filter-select">${game.i18n.localize("LANCER_NPC_CREATOR.FilterByRole")}</label>`;
         const filterSelect = document.createElement("select");
         filterSelect.id = "role-filter-select";
 
@@ -212,7 +212,8 @@ class NpcCreatorApp extends foundry.applications.api.ApplicationV2 {
         const availableRoles = ["Todos", ...new Set(this.classes.map(c => c.system.role).filter(Boolean))].sort();
         availableRoles.forEach(r => {
             const selectedAttr = r === this.selectedRoleFilter ? "selected" : "";
-            filterSelect.innerHTML += `<option value="${r}" ${selectedAttr}>${r}</option>`;
+            const displayLabel = r === "Todos" ? game.i18n.localize("LANCER_NPC_CREATOR.RoleAll") : r;
+            filterSelect.innerHTML += `<option value="${r}" ${selectedAttr}>${displayLabel}</option>`;
         });
 
         filterSelect.addEventListener("change", (e) => {
@@ -226,7 +227,7 @@ class NpcCreatorApp extends foundry.applications.api.ApplicationV2 {
         // Seletor de Classe (Filtrado)
         const classGroup = document.createElement("div");
         classGroup.className = "form-group";
-        classGroup.innerHTML = `<label for="class-select">Classe Base do PNJ</label>`;
+        classGroup.innerHTML = `<label for="class-select">${game.i18n.localize("LANCER_NPC_CREATOR.BaseClass")}</label>`;
         const classSelect = document.createElement("select");
         classSelect.id = "class-select";
         filteredClasses.forEach(c => {
@@ -245,11 +246,11 @@ class NpcCreatorApp extends foundry.applications.api.ApplicationV2 {
         const tierGroup = document.createElement("div");
         tierGroup.className = "form-group";
         tierGroup.innerHTML = `
-            <label>Patamar de Combate (Tier)</label>
+            <label>${game.i18n.localize("LANCER_NPC_CREATOR.CombatTier")}</label>
             <div class="tier-buttons">
-                <div class="tier-btn ${this.selectedTier === 1 ? 'active' : ''}" data-tier="1">Patamar I</div>
-                <div class="tier-btn ${this.selectedTier === 2 ? 'active' : ''}" data-tier="2">Patamar II</div>
-                <div class="tier-btn ${this.selectedTier === 3 ? 'active' : ''}" data-tier="3">Patamar III</div>
+                <div class="tier-btn ${this.selectedTier === 1 ? 'active' : ''}" data-tier="1">${game.i18n.localize("LANCER_NPC_CREATOR.Tier1")}</div>
+                <div class="tier-btn ${this.selectedTier === 2 ? 'active' : ''}" data-tier="2">${game.i18n.localize("LANCER_NPC_CREATOR.Tier2")}</div>
+                <div class="tier-btn ${this.selectedTier === 3 ? 'active' : ''}" data-tier="3">${game.i18n.localize("LANCER_NPC_CREATOR.Tier3")}</div>
             </div>
         `;
         tierGroup.querySelectorAll(".tier-btn").forEach(btn => {
@@ -263,7 +264,7 @@ class NpcCreatorApp extends foundry.applications.api.ApplicationV2 {
         // Seletor de Modelos (Templates)
         const templatesGroup = document.createElement("div");
         templatesGroup.className = "form-group";
-        templatesGroup.innerHTML = `<label>Aplicar Modelos (Templates)</label>`;
+        templatesGroup.innerHTML = `<label>${game.i18n.localize("LANCER_NPC_CREATOR.ApplyTemplates")}</label>`;
         const templatesGrid = document.createElement("div");
         templatesGrid.className = "checkbox-grid";
         this.templates.forEach(t => {
@@ -301,7 +302,7 @@ class NpcCreatorApp extends foundry.applications.api.ApplicationV2 {
         const classOptionalLids = [...selectedClass.system.optional_features];
         const classOptionalsGroup = document.createElement("div");
         classOptionalsGroup.className = "form-group";
-        classOptionalsGroup.innerHTML = `<label>Características Opcionais da Classe</label>`;
+        classOptionalsGroup.innerHTML = `<label>${game.i18n.localize("LANCER_NPC_CREATOR.ClassOptionalFeatures")}</label>`;
         const classOptionalsGrid = document.createElement("div");
         classOptionalsGrid.className = "checkbox-grid";
 
@@ -329,7 +330,7 @@ class NpcCreatorApp extends foundry.applications.api.ApplicationV2 {
             });
             classOptionalsGroup.appendChild(classOptionalsGrid);
         } else {
-            classOptionalsGroup.innerHTML += `<div class="no-options" style="color: #a0aec0; font-size: 0.8rem; text-align: center;">Nenhuma opção disponível para esta classe.</div>`;
+            classOptionalsGroup.innerHTML += `<div class="no-options" style="color: #a0aec0; font-size: 0.8rem; text-align: center;">${game.i18n.localize("LANCER_NPC_CREATOR.NoClassOptions")}</div>`;
         }
         leftPanel.appendChild(classOptionalsGroup);
 
@@ -344,7 +345,7 @@ class NpcCreatorApp extends foundry.applications.api.ApplicationV2 {
 
         const templateOptionalsGroup = document.createElement("div");
         templateOptionalsGroup.className = "form-group";
-        templateOptionalsGroup.innerHTML = `<label>Características Opcionais dos Modelos</label>`;
+        templateOptionalsGroup.innerHTML = `<label>${game.i18n.localize("LANCER_NPC_CREATOR.TemplateOptionalFeatures")}</label>`;
         const templateOptionalsGrid = document.createElement("div");
         templateOptionalsGrid.className = "checkbox-grid";
 
@@ -372,7 +373,7 @@ class NpcCreatorApp extends foundry.applications.api.ApplicationV2 {
             });
             templateOptionalsGroup.appendChild(templateOptionalsGrid);
         } else {
-            templateOptionalsGroup.innerHTML += `<div class="no-options" style="color: #a0aec0; font-size: 0.8rem; text-align: center;">Nenhum modelo com opções adicionais selecionado.</div>`;
+            templateOptionalsGroup.innerHTML += `<div class="no-options" style="color: #a0aec0; font-size: 0.8rem; text-align: center;">${game.i18n.localize("LANCER_NPC_CREATOR.NoTemplateOptions")}</div>`;
         }
         leftPanel.appendChild(templateOptionalsGroup);
 
@@ -384,15 +385,15 @@ class NpcCreatorApp extends foundry.applications.api.ApplicationV2 {
         const modelsLabel = this.selectedTemplateLids.map(tLid => {
             const t = this.templates.find(temp => temp.system.lid === tLid);
             return t ? t.name : "";
-        }).filter(x => x).join(" ") || "COMUM";
+        }).filter(x => x).join(" ") || game.i18n.localize("LANCER_NPC_CREATOR.CommonTemplate");
 
         rightPanel.innerHTML = `
             <div class="hud-header">
                 <div class="hud-title">
                     <h2>${selectedClass.name}</h2>
-                    <span>Função: ${selectedClass.system.role} | Modelos: ${modelsLabel}</span>
+                    <span>${game.i18n.localize("LANCER_NPC_CREATOR.RoleLabel")}: ${selectedClass.system.role} | ${game.i18n.localize("LANCER_NPC_CREATOR.TemplatesLabel")}: ${modelsLabel}</span>
                 </div>
-                <div class="hud-badge">Patamar ${this.selectedTier}</div>
+                <div class="hud-badge">${game.i18n.localize("LANCER_NPC_CREATOR.TierLabel")} ${this.selectedTier}</div>
             </div>
         `;
 
@@ -400,52 +401,52 @@ class NpcCreatorApp extends foundry.applications.api.ApplicationV2 {
         const statsGrid = document.createElement("div");
         statsGrid.className = "stats-grid";
         statsGrid.innerHTML = `
-            <div class="stat-box highlight" title="Pontos de Vida">
-                <div class="stat-label">PV</div>
+            <div class="stat-box highlight" title="${game.i18n.localize("LANCER_NPC_CREATOR.HPTitle")}">
+                <div class="stat-label">${game.i18n.localize("LANCER_NPC_CREATOR.HP")}</div>
                 <div class="stat-value">${stats.hp}</div>
             </div>
-            <div class="stat-box" title="Armadura">
-                <div class="stat-label">ARM</div>
+            <div class="stat-box" title="${game.i18n.localize("LANCER_NPC_CREATOR.ArmorTitle")}">
+                <div class="stat-label">${game.i18n.localize("LANCER_NPC_CREATOR.Armor")}</div>
                 <div class="stat-value">${stats.armor}</div>
             </div>
-            <div class="stat-box" title="Evasão">
-                <div class="stat-label">EVA</div>
+            <div class="stat-box" title="${game.i18n.localize("LANCER_NPC_CREATOR.EvasionTitle")}">
+                <div class="stat-label">${game.i18n.localize("LANCER_NPC_CREATOR.Evasion")}</div>
                 <div class="stat-value">${stats.evasion}</div>
             </div>
-            <div class="stat-box" title="Defesa Eletrônica">
-                <div class="stat-label">DEF-E</div>
+            <div class="stat-box" title="${game.i18n.localize("LANCER_NPC_CREATOR.EDefTitle")}">
+                <div class="stat-label">${game.i18n.localize("LANCER_NPC_CREATOR.EDef")}</div>
                 <div class="stat-value">${stats.edef}</div>
             </div>
-            <div class="stat-box highlight" title="Estrutura">
-                <div class="stat-label">ESTRUT</div>
+            <div class="stat-box highlight" title="${game.i18n.localize("LANCER_NPC_CREATOR.StructureTitle")}">
+                <div class="stat-label">${game.i18n.localize("LANCER_NPC_CREATOR.Structure")}</div>
                 <div class="stat-value">${stats.structure}</div>
             </div>
-            <div class="stat-box highlight" title="Estresse">
-                <div class="stat-label">ESTRES</div>
+            <div class="stat-box highlight" title="${game.i18n.localize("LANCER_NPC_CREATOR.StressTitle")}">
+                <div class="stat-label">${game.i18n.localize("LANCER_NPC_CREATOR.Stress")}</div>
                 <div class="stat-value">${stats.stress}</div>
             </div>
-            <div class="stat-box" title="Limite de Calor">
-                <div class="stat-label">CAP CALOR</div>
+            <div class="stat-box" title="${game.i18n.localize("LANCER_NPC_CREATOR.HeatCapTitle")}">
+                <div class="stat-label">${game.i18n.localize("LANCER_NPC_CREATOR.HeatCap")}</div>
                 <div class="stat-value">${stats.heatcap}</div>
             </div>
-            <div class="stat-box" title="Velocidade">
-                <div class="stat-label">VEL</div>
+            <div class="stat-box" title="${game.i18n.localize("LANCER_NPC_CREATOR.SpeedTitle")}">
+                <div class="stat-label">${game.i18n.localize("LANCER_NPC_CREATOR.Speed")}</div>
                 <div class="stat-value">${stats.speed}</div>
             </div>
-            <div class="stat-box" title="Tamanho">
-                <div class="stat-label">TAM</div>
+            <div class="stat-box" title="${game.i18n.localize("LANCER_NPC_CREATOR.SizeTitle")}">
+                <div class="stat-label">${game.i18n.localize("LANCER_NPC_CREATOR.Size")}</div>
                 <div class="stat-value">${stats.size}</div>
             </div>
-            <div class="stat-box" title="Sensores">
-                <div class="stat-label">SENS</div>
+            <div class="stat-box" title="${game.i18n.localize("LANCER_NPC_CREATOR.SensorRangeTitle")}">
+                <div class="stat-label">${game.i18n.localize("LANCER_NPC_CREATOR.SensorRange")}</div>
                 <div class="stat-value">${stats.sensor_range}</div>
             </div>
-            <div class="stat-box" title="Meta de Salvamento">
-                <div class="stat-label">SALV</div>
+            <div class="stat-box" title="${game.i18n.localize("LANCER_NPC_CREATOR.SaveTitle")}">
+                <div class="stat-label">${game.i18n.localize("LANCER_NPC_CREATOR.Save")}</div>
                 <div class="stat-value">${stats.save}</div>
             </div>
-            <div class="stat-boxHighlight" style="background: rgba(226, 28, 52, 0.1); border: 1px solid #e21c34; border-radius: 4px; padding: 8px; text-align: center; display: flex; flex-direction: column; justify-content: center;" title="Ativações na Rodada">
-                <div class="stat-label" style="color: #e21c34;">ATIV</div>
+            <div class="stat-boxHighlight" style="background: rgba(226, 28, 52, 0.1); border: 1px solid #e21c34; border-radius: 4px; padding: 8px; text-align: center; display: flex; flex-direction: column; justify-content: center;" title="${game.i18n.localize("LANCER_NPC_CREATOR.ActivationsTitle")}">
+                <div class="stat-label" style="color: #e21c34;">${game.i18n.localize("LANCER_NPC_CREATOR.Activations")}</div>
                 <div class="stat-value">${stats.activations}</div>
             </div>
         `;
@@ -454,7 +455,7 @@ class NpcCreatorApp extends foundry.applications.api.ApplicationV2 {
         // Lista de Características Ativas (Habilidades do PNJ)
         const featuresSec = document.createElement("div");
         featuresSec.className = "features-section";
-        featuresSec.innerHTML = `<div class="features-title">Habilidades e Características Equipadas (${activeFeatures.length})</div>`;
+        featuresSec.innerHTML = `<div class="features-title">${game.i18n.format("LANCER_NPC_CREATOR.EquippedFeaturesTitle", {count: activeFeatures.length})}</div>`;
 
         activeFeatures.forEach(feat => {
             // Limpar marcações markdown de efeito para exibição HTML simples
@@ -463,9 +464,9 @@ class NpcCreatorApp extends foundry.applications.api.ApplicationV2 {
                     .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
                     .replace(/\*(.*?)\*/g, '<em>$1</em>')
                     .replace(/\n/g, '<br>')
-                : "Sem efeito registrado.";
+                : game.i18n.localize("LANCER_NPC_CREATOR.NoEffect");
 
-            const originName = feat.system.origin ? feat.system.origin.name || feat.system.origin.type : "Classe";
+            const originName = feat.system.origin ? feat.system.origin.name || feat.system.origin.type : game.i18n.localize("LANCER_NPC_CREATOR.OriginClass");
 
             featuresSec.innerHTML += `
                 <div class="feature-card">
@@ -482,7 +483,7 @@ class NpcCreatorApp extends foundry.applications.api.ApplicationV2 {
         // Botão Gerar PNJ no Mundo
         const generateBtn = document.createElement("button");
         generateBtn.className = "generate-btn";
-        generateBtn.innerHTML = `<i class="fa-solid fa-folder-plus"></i> Gerar PNJ no Mundo`;
+        generateBtn.innerHTML = `<i class="fa-solid fa-folder-plus"></i> ${game.i18n.localize("LANCER_NPC_CREATOR.GenerateNPC")}`;
         generateBtn.addEventListener("click", async () => {
             try {
                 const templatesName = this.selectedTemplateLids.map(tLid => {
@@ -490,7 +491,7 @@ class NpcCreatorApp extends foundry.applications.api.ApplicationV2 {
                     return t ? t.name : "";
                 }).filter(x => x).join(" ");
 
-                const actorName = `${selectedClass.name}${templatesName ? ' (' + templatesName + ')' : ''} - Patamar ${this.selectedTier}`;
+                const actorName = `${selectedClass.name}${templatesName ? ' (' + templatesName + ')' : ''} - ${game.i18n.localize("LANCER_NPC_CREATOR.TierLabel")} ${this.selectedTier}`;
 
                 const actorData = {
                     name: actorName,
@@ -517,7 +518,7 @@ class NpcCreatorApp extends foundry.applications.api.ApplicationV2 {
                 });
 
                 const actor = await Actor.create(actorData);
-                ui.notifications.info(`PNJ "${actor.name}" gerado com sucesso na barra lateral!`);
+                ui.notifications.info(game.i18n.format("LANCER_NPC_CREATOR.GenerateSuccess", { name: actor.name }));
 
                 // Abrir a ficha do novo PNJ automaticamente
                 actor.sheet.render(true);
@@ -526,7 +527,7 @@ class NpcCreatorApp extends foundry.applications.api.ApplicationV2 {
                 this.close();
             } catch (err) {
                 console.error("Lancer NPC Creator | Falha ao gerar o ator do PNJ:", err);
-                ui.notifications.error("Erro ao gerar o PNJ no mundo. Veja o console do navegador para detalhes.");
+                ui.notifications.error(game.i18n.localize("LANCER_NPC_CREATOR.GenerateError"));
             }
         });
         rightPanel.appendChild(generateBtn);
@@ -556,7 +557,7 @@ Hooks.on("renderActorDirectory", (app, html, data) => {
             btn.className = "npc-creator-btn";
             btn.innerHTML = `
                 <i class="fa-solid fa-robot" inert=""></i>
-                <span>Criador de PNJ</span>
+                <span>${game.i18n.localize("LANCER_NPC_CREATOR.SidebarButton")}</span>
             `;
             btn.addEventListener("click", () => {
                 new NpcCreatorApp().render({ force: true });
