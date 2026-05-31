@@ -37,39 +37,31 @@ class NpcCreatorApp extends foundry.applications.api.ApplicationV2 {
             const allNPCTemplates = [];
             const allNPCFeatures = [];
 
-            // 1. Tentar prioritariamente carregar do compêndio brasileiro de features
-            const primaryPack = game.packs.get("lancer-npcs-basico.npc-features");
-            if (primaryPack) {
+            // 1. Carregar do compêndio básico de características
+            const basicPack = game.packs.get("lancer-npcs-basico.npc-features");
+            if (basicPack) {
                 try {
-                    console.log("Lancer NPC Creator | Tentando carregar dados do compêndio prioritário: lancer-npcs-basico.npc-features");
-                    const docs = await primaryPack.getDocuments();
+                    console.log("Lancer NPC Creator | Carregando dados do compêndio básico: lancer-npcs-basico.npc-features");
+                    const docs = await basicPack.getDocuments();
                     allNPCClasses.push(...docs.filter(d => d.type === "npc_class"));
                     allNPCTemplates.push(...docs.filter(d => d.type === "npc_template"));
                     allNPCFeatures.push(...docs.filter(d => d.type === "npc_feature"));
                 } catch (err) {
-                    console.warn("Lancer NPC Creator | Erro ao carregar o compêndio básico prioritário:", err);
+                    console.warn("Lancer NPC Creator | Erro ao carregar o compêndio básico:", err);
                 }
             }
 
-            // 2. Se nenhuma classe foi carregada (compêndio ausente ou vazio), varre todos os outros compêndios de itens ativos no jogo
-            if (allNPCClasses.length === 0) {
-                console.log("Lancer NPC Creator | Iniciando busca genérica de itens de PNJ em outros compêndios...");
-                const itemPacks = game.packs.filter(p => p.metadata.type === "Item" || p.documentName === "Item");
-                for (const pack of itemPacks) {
-                    if (pack.collection === "lancer-npcs-basico.npc-features") continue;
-                    try {
-                        const index = await pack.getIndex();
-                        const hasNpcDocs = index.some(idx => ["npc_class", "npc_template", "npc_feature"].includes(idx.type));
-                        if (hasNpcDocs) {
-                            console.log(`Lancer NPC Creator | Carregando documentos do compêndio compatível: ${pack.collection}`);
-                            const docs = await pack.getDocuments();
-                            allNPCClasses.push(...docs.filter(d => d.type === "npc_class"));
-                            allNPCTemplates.push(...docs.filter(d => d.type === "npc_template"));
-                            allNPCFeatures.push(...docs.filter(d => d.type === "npc_feature"));
-                        }
-                    } catch (err) {
-                        console.error(`Lancer NPC Creator | Erro ao verificar compêndio ${pack.collection}:`, err);
-                    }
+            // 2. Carregar do compêndio customizado criado no módulo
+            const customPack = game.packs.get("lancer-npc-creator.custom-npc-features");
+            if (customPack) {
+                try {
+                    console.log("Lancer NPC Creator | Carregando dados do compêndio customizado: lancer-npc-creator.custom-npc-features");
+                    const docs = await customPack.getDocuments();
+                    allNPCClasses.push(...docs.filter(d => d.type === "npc_class"));
+                    allNPCTemplates.push(...docs.filter(d => d.type === "npc_template"));
+                    allNPCFeatures.push(...docs.filter(d => d.type === "npc_feature"));
+                } catch (err) {
+                    console.warn("Lancer NPC Creator | Erro ao carregar o compêndio customizado:", err);
                 }
             }
 

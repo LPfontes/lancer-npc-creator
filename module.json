@@ -16,6 +16,15 @@
   "esmodules": [
     "scripts/npc-creator.mjs"
   ],
+  "packs": [
+    {
+      "name": "custom-npc-features",
+      "label": "Criador de PNJ - Características Customizadas",
+      "path": "packs/custom-npc-features",
+      "type": "Item",
+      "system": "lancer"
+    }
+  ],
   "styles": [
     "styles/npc-creator.css"
   ],
