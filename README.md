@@ -19,7 +19,7 @@ graph TD
 ```
 
 ### 1. Compêndio de Características (`lancer-npcs-basico.npc-features`)
-*   O módulo acessa o compêndio contendo as características do livro básico traduzidas para português.
+*   O módulo acessa o compêndio contendo as características do livro básico.
 *   Se estiver ativo e acessível, todos os seus documentos são lidos e categorizados de acordo com seu tipo (`npc_class`, `npc_template` ou `npc_feature`).
 
 ### 2. Compêndio de Características Customizadas (`lancer-npc-creator.custom-npc-features`)
