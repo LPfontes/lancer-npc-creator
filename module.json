@@ -1,0 +1,30 @@
+{
+  "id": "lancer-npc-creator",
+  "title": "Lancer NPC Creator",
+  "description": "Ferramenta de design e criação reativa de PNJs integrada nativamente ao diretório de Atores do Foundry VTT utilizando o framework ApplicationV2.",
+  "version": "1.0.0",
+  "library": false,
+  "authors": [
+    {
+      "name": "luiz"
+    }
+  ],
+  "compatibility": {
+    "minimum": "13",
+    "verified": "13"
+  },
+  "esmodules": [
+    "scripts/npc-creator.mjs"
+  ],
+  "styles": [
+    "styles/npc-creator.css"
+  ],
+  "relationships": {
+    "recommends": [
+      {
+        "id": "lancer-npcs-basico",
+        "type": "module"
+      }
+    ]
+  }
+}

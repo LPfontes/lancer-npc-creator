@@ -1,0 +1,285 @@
+/* Estilos do Criador de PNJ - Lancer NPCs */
+
+/* Container Principal */
+.npc-creator-app {
+    display: flex;
+    flex-direction: row;
+    gap: 15px;
+    height: 100%;
+    min-height: 500px;
+    padding: 10px;
+    background-color: #0b0d11;
+    color: #e2e8f0;
+    font-family: 'Outfit', 'Inter', system-ui, -apple-system, sans-serif;
+    overflow: hidden;
+}
+
+/* Colunas do Layout */
+.npc-creator-app .creator-config-panel {
+    flex: 1.2;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    overflow-y: auto;
+    padding-right: 5px;
+}
+
+.npc-creator-app .creator-preview-panel {
+    flex: 1.5;
+    background: rgba(16, 20, 27, 0.7);
+    border-left: 2px solid #e21c34;
+    padding: 15px;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    overflow-y: auto;
+    backdrop-filter: blur(10px);
+}
+
+/* Formulário de Configuração */
+.npc-creator-app .form-group {
+    background: rgba(26, 32, 44, 0.5);
+    border: 1px solid rgba(226, 28, 52, 0.2);
+    border-radius: 4px;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.npc-creator-app .form-group label {
+    font-weight: bold;
+    color: #e21c34;
+    text-transform: uppercase;
+    font-size: 0.85rem;
+    letter-spacing: 1px;
+}
+
+.npc-creator-app select, 
+.npc-creator-app input[type="text"] {
+    background: #10141b;
+    border: 1px solid rgba(226, 28, 52, 0.4);
+    color: #e2e8f0;
+    border-radius: 3px;
+    width: 100%;
+}
+
+.npc-creator-app select:focus {
+    border-color: #e21c34;
+    outline: none;
+    box-shadow: 0 0 5px rgba(226, 28, 52, 0.5);
+}
+
+/* Sliders de Patamar */
+.npc-creator-app .tier-buttons {
+    display: flex;
+    gap: 10px;
+}
+
+.npc-creator-app .tier-btn {
+    flex: 1;
+    background: #10141b;
+    border: 1px solid rgba(226, 28, 52, 0.4);
+    color: #a0aec0;
+    padding: 8px;
+    text-align: center;
+    border-radius: 3px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: all 0.2s ease;
+}
+
+.npc-creator-app .tier-btn.active {
+    background: #e21c34;
+    color: #fff;
+    border-color: #e21c34;
+    box-shadow: 0 0 10px rgba(226, 28, 52, 0.4);
+}
+
+/* Checkboxes (Mutações/Modelos) */
+.npc-creator-app .checkbox-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+}
+
+.npc-creator-app .checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(16, 20, 27, 0.6);
+    padding: 6px 10px;
+    border-radius: 3px;
+    cursor: pointer;
+    border: 1px solid transparent;
+    transition: all 0.2s ease;
+    font-size: 0.85rem;
+}
+
+.npc-creator-app .checkbox-label:hover {
+    border-color: rgba(226, 28, 52, 0.3);
+    background: rgba(16, 20, 27, 0.9);
+}
+
+.npc-creator-app .checkbox-label input[type="checkbox"] {
+    accent-color: #e21c34;
+}
+
+/* Ficha HUD */
+.npc-creator-app .hud-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 2px solid rgba(226, 28, 52, 0.3);
+    padding-bottom: 10px;
+}
+
+.npc-creator-app .hud-title h2 {
+    margin: 0;
+    color: #fff;
+    font-size: 1.5rem;
+    text-transform: uppercase;
+}
+
+.npc-creator-app .hud-title span {
+    color: #a0aec0;
+    font-size: 0.85rem;
+}
+
+.npc-creator-app .hud-badge {
+    background: #e21c34;
+    color: #fff;
+    padding: 4px 8px;
+    border-radius: 3px;
+    font-weight: bold;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+}
+
+/* Grade de Atributos */
+.npc-creator-app .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+}
+
+.npc-creator-app .stat-box {
+    background: rgba(26, 32, 44, 0.8);
+    border: 1px solid rgba(226, 28, 52, 0.2);
+    border-radius: 4px;
+    padding: 8px;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.npc-creator-app .stat-box.highlight {
+    border-color: #e21c34;
+    background: rgba(226, 28, 52, 0.05);
+}
+
+.npc-creator-app .stat-label {
+    font-size: 0.7rem;
+    color: #a0aec0;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 2px;
+}
+
+.npc-creator-app .stat-value {
+    font-size: 1.3rem;
+    font-weight: bold;
+    color: #fff;
+}
+
+/* Características Equipadas */
+.npc-creator-app .features-section {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.npc-creator-app .features-title {
+    font-weight: bold;
+    color: #e21c34;
+    text-transform: uppercase;
+    font-size: 0.9rem;
+    letter-spacing: 1px;
+    border-bottom: 1px solid rgba(226, 28, 52, 0.2);
+    padding-bottom: 4px;
+}
+
+.npc-creator-app .feature-card {
+    background: rgba(26, 32, 44, 0.5);
+    border: 1px solid rgba(226, 28, 52, 0.15);
+    border-radius: 4px;
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    font-size: 0.85rem;
+}
+
+.npc-creator-app .feature-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-weight: bold;
+    color: #fff;
+}
+
+.npc-creator-app .feature-origin {
+    font-size: 0.7rem;
+    color: #a0aec0;
+    background: rgba(255, 255, 255, 0.05);
+    padding: 2px 6px;
+    border-radius: 3px;
+}
+
+.npc-creator-app .feature-effect {
+    color: #cbd5e0;
+    line-height: 1.4;
+}
+
+/* Botão de Ação de Geração */
+.npc-creator-app .generate-btn {
+    background: #e21c34;
+    color: #fff;
+    border: none;
+    padding: 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-top: auto;
+}
+
+.npc-creator-app .generate-btn:hover {
+    background: #ff2d4a;
+    box-shadow: 0 0 15px rgba(226, 28, 52, 0.6);
+}
+
+/* Botão na Barra Lateral */
+.npc-creator-btn {
+    flex: 1;
+    background: #e21c34 !important;
+    color: #fff !important;
+    border: none !important;
+    font-weight: bold !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.5px !important;
+    margin: 5px 0 !important;
+    box-shadow: 0 0 8px rgba(226, 28, 52, 0.3) !important;
+}
+
+.npc-creator-btn:hover {
+    background: #ff2d4a !important;
+    box-shadow: 0 0 12px rgba(226, 28, 52, 0.5) !important;
+}
