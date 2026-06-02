@@ -50,6 +50,7 @@
     "NoClassesFound": "Nenhuma classe de PNJ encontrada. Certifique-se de que pelo menos um compêndio contendo itens do Lancer está ativo.",
     "GenerateSuccess": "PNJ \"{name}\" gerado com sucesso na barra lateral!",
     "GenerateError": "Erro ao gerar o PNJ no mundo. Veja o console do navegador para detalhes.",
-    "PackCustomFeatures": "Criador de PNJ - Características Customizadas"
+    "PackCustomFeatures": "Criador de PNJ - Características Customizadas",
+    "Custom": "Customizado"
   }
 }

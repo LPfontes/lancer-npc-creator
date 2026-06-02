@@ -210,6 +210,9 @@ class NpcCreatorApp extends foundry.applications.api.ApplicationV2 {
             stats.stress = 0;
         }
 
+        this._currentBaseStats = { ...baseStats };
+        this._currentCalculatedStats = { ...stats };
+
         // 2. Montar interface HTML
         // Coluna Esquerda: Painel de Configurações
         const leftPanel = document.createElement("div");
@@ -412,56 +415,61 @@ class NpcCreatorApp extends foundry.applications.api.ApplicationV2 {
         `;
 
         // Atributos Calculados (Grade HUD)
+        // Atributos Calculados (Grade HUD) - Agora com Inputs
         const statsGrid = document.createElement("div");
         statsGrid.className = "stats-grid";
+
+        // Estilo inline básico para fazer os inputs se mesclarem com a UI
+        const inputStyle = "width: 100%; text-align: center; background: rgba(0,0,0,0.1); border: 1px dashed rgba(255,255,255,0.3); color: inherit; border-radius: 3px; font-family: inherit; font-size: inherit;";
+
         statsGrid.innerHTML = `
             <div class="stat-box highlight" title="${game.i18n.localize("LANCER_NPC_CREATOR.HPTitle")}">
                 <div class="stat-label">${game.i18n.localize("LANCER_NPC_CREATOR.HP")}</div>
-                <div class="stat-value">${stats.hp}</div>
+                <input type="text" class="stat-value stat-input" data-stat="hp" value="${stats.hp}" style="${inputStyle}">
             </div>
             <div class="stat-box" title="${game.i18n.localize("LANCER_NPC_CREATOR.ArmorTitle")}">
                 <div class="stat-label">${game.i18n.localize("LANCER_NPC_CREATOR.Armor")}</div>
-                <div class="stat-value">${stats.armor}</div>
+                <input type="text" class="stat-value stat-input" data-stat="armor" value="${stats.armor}" style="${inputStyle}">
             </div>
             <div class="stat-box" title="${game.i18n.localize("LANCER_NPC_CREATOR.EvasionTitle")}">
                 <div class="stat-label">${game.i18n.localize("LANCER_NPC_CREATOR.Evasion")}</div>
-                <div class="stat-value">${stats.evasion}</div>
+                <input type="text" class="stat-value stat-input" data-stat="evasion" value="${stats.evasion}" style="${inputStyle}">
             </div>
             <div class="stat-box" title="${game.i18n.localize("LANCER_NPC_CREATOR.EDefTitle")}">
                 <div class="stat-label">${game.i18n.localize("LANCER_NPC_CREATOR.EDef")}</div>
-                <div class="stat-value">${stats.edef}</div>
+                <input type="text" class="stat-value stat-input" data-stat="edef" value="${stats.edef}" style="${inputStyle}">
             </div>
             <div class="stat-box highlight" title="${game.i18n.localize("LANCER_NPC_CREATOR.StructureTitle")}">
                 <div class="stat-label">${game.i18n.localize("LANCER_NPC_CREATOR.Structure")}</div>
-                <div class="stat-value">${stats.structure}</div>
+                <input type="text" class="stat-value stat-input" data-stat="structure" value="${stats.structure}" style="${inputStyle}">
             </div>
             <div class="stat-box highlight" title="${game.i18n.localize("LANCER_NPC_CREATOR.StressTitle")}">
                 <div class="stat-label">${game.i18n.localize("LANCER_NPC_CREATOR.Stress")}</div>
-                <div class="stat-value">${stats.stress}</div>
+                <input type="text" class="stat-value stat-input" data-stat="stress" value="${stats.stress}" style="${inputStyle}">
             </div>
             <div class="stat-box" title="${game.i18n.localize("LANCER_NPC_CREATOR.HeatCapTitle")}">
                 <div class="stat-label">${game.i18n.localize("LANCER_NPC_CREATOR.HeatCap")}</div>
-                <div class="stat-value">${stats.heatcap}</div>
+                <input type="text" class="stat-value stat-input" data-stat="heatcap" value="${stats.heatcap}" style="${inputStyle}">
             </div>
             <div class="stat-box" title="${game.i18n.localize("LANCER_NPC_CREATOR.SpeedTitle")}">
                 <div class="stat-label">${game.i18n.localize("LANCER_NPC_CREATOR.Speed")}</div>
-                <div class="stat-value">${stats.speed}</div>
+                <input type="text" class="stat-value stat-input" data-stat="speed" value="${stats.speed}" style="${inputStyle}">
             </div>
             <div class="stat-box" title="${game.i18n.localize("LANCER_NPC_CREATOR.SizeTitle")}">
                 <div class="stat-label">${game.i18n.localize("LANCER_NPC_CREATOR.Size")}</div>
-                <div class="stat-value">${stats.size}</div>
+                <input type="text" class="stat-value stat-input" data-stat="size" value="${stats.size}" style="${inputStyle}">
             </div>
             <div class="stat-box" title="${game.i18n.localize("LANCER_NPC_CREATOR.SensorRangeTitle")}">
                 <div class="stat-label">${game.i18n.localize("LANCER_NPC_CREATOR.SensorRange")}</div>
-                <div class="stat-value">${stats.sensor_range}</div>
+                <input type="text" class="stat-value stat-input" data-stat="sensor_range" value="${stats.sensor_range}" style="${inputStyle}">
             </div>
             <div class="stat-box" title="${game.i18n.localize("LANCER_NPC_CREATOR.SaveTitle")}">
                 <div class="stat-label">${game.i18n.localize("LANCER_NPC_CREATOR.Save")}</div>
-                <div class="stat-value">${stats.save}</div>
+                <input type="text" class="stat-value stat-input" data-stat="save" value="${stats.save}" style="${inputStyle}">
             </div>
             <div class="stat-boxHighlight" style="background: rgba(226, 28, 52, 0.1); border: 1px solid #e21c34; border-radius: 4px; padding: 8px; text-align: center; display: flex; flex-direction: column; justify-content: center;" title="${game.i18n.localize("LANCER_NPC_CREATOR.ActivationsTitle")}">
                 <div class="stat-label" style="color: #e21c34;">${game.i18n.localize("LANCER_NPC_CREATOR.Activations")}</div>
-                <div class="stat-value">${stats.activations}</div>
+                <input type="text" class="stat-value stat-input" data-stat="activations" value="${stats.activations}" style="${inputStyle} border-color: #e21c34;">
             </div>
         `;
         rightPanel.appendChild(statsGrid);
@@ -507,18 +515,59 @@ class NpcCreatorApp extends foundry.applications.api.ApplicationV2 {
 
                 const actorName = `${selectedClass.name}${templatesName ? ' (' + templatesName + ')' : ''} - ${game.i18n.localize("LANCER_NPC_CREATOR.TierLabel")} ${this.selectedTier}`;
 
+                // --- NOVO: Capturar os valores manuais dos inputs ---
+                const customStats = {};
+                let isModified = false; // Rastreador para saber se o usuário mudou algo
+                rightPanel.querySelectorAll(".stat-input").forEach(input => {
+                    const statName = input.dataset.stat;
+                    const val = isNaN(input.value) || input.value.trim() === "" ? input.value : Number(input.value);
+                    customStats[statName] = val;
+
+                    // Verifica se o valor digitado é diferente do valor calculado automaticamente
+                    if (val !== this._currentCalculatedStats[statName]) {
+                        isModified = true;
+                    }
+                });
+
+                // --- Estruturar o objeto do Ator corretamente ---
                 const actorData = {
                     name: actorName,
                     type: "npc",
                     img: selectedClass.img || "systems/lancer/assets/icons/npc_class.svg",
                     system: {
-                        tier: this.selectedTier
+                        tier: this.selectedTier,
+                        hp: { value: customStats.hp },
+                        structure: { value: customStats.structure },
+                        stress: { value: customStats.stress },
+                        heat: { value: 0 }
                     },
                     items: []
                 };
 
-                // Inserir a classe
-                actorData.items.push(selectedClass.toObject());
+                // --- CRIAR A CLASSE MODIFICADA ESPECIAL ---
+                const modifiedClass = selectedClass.toObject();
+
+                if (isModified) {
+                    modifiedClass.name = `${modifiedClass.name} (${game.i18n.localize("LANCER_NPC_CREATOR.Custom")})`;
+                    const tierIndex = this.selectedTier - 1;
+
+                    Object.keys(customStats).forEach(statName => {
+                        const inputVal = customStats[statName];
+
+                        // Se for um número, precisamos subtrair os bônus de templates/features
+                        // para que o Foundry não dobre esses bônus ao montar a ficha do NPC
+                        if (typeof inputVal === "number" && typeof this._currentBaseStats[statName] === "number") {
+                            const bonusFromTemplatesAndFeatures = this._currentCalculatedStats[statName] - this._currentBaseStats[statName];
+                            modifiedClass.system.base_stats[tierIndex][statName] = inputVal - bonusFromTemplatesAndFeatures;
+                        } else {
+                            // Para valores em texto (como Size "1/2")
+                            modifiedClass.system.base_stats[tierIndex][statName] = inputVal;
+                        }
+                    });
+                }
+
+                // Inserir a classe especial (ou a normal se nada foi alterado)
+                actorData.items.push(modifiedClass);
 
                 // Inserir os templates
                 this.selectedTemplateLids.forEach(tLid => {

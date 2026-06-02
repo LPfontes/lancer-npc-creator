@@ -50,6 +50,7 @@
     "NoClassesFound": "No NPC classes found. Make sure at least one compendium containing Lancer items is active.",
     "GenerateSuccess": "NPC \"{name}\" successfully generated in the sidebar!",
     "GenerateError": "Error generating NPC in world. Check the browser console for details.",
-    "PackCustomFeatures": "NPC Creator - Custom Features"
+    "PackCustomFeatures": "NPC Creator - Custom Features",
+    "Custom": "Custom"
   }
 }
