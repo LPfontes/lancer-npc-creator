@@ -20,7 +20,7 @@ jobs:
           mkdir -p lancer-npc-creator
           
           # Copy the required assets into the directory
-          cp -r scripts styles packs module.json README.md README-EN.md lancer-npc-creator/
+          cp -r scripts lang styles packs module.json README.md README-EN.md lancer-npc-creator/
           
           # Zip the directory
           zip -r module.zip lancer-npc-creator/
