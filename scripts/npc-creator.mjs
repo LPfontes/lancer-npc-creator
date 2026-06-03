@@ -128,32 +128,6 @@ class NpcCreatorApp extends foundry.applications.api.ApplicationV2 {
 
         let stats = { ...baseStats };
 
-        const hasElite = this.selectedTemplateLids.includes("template_elite");
-        const hasUltra = this.selectedTemplateLids.includes("template_ultra");
-        const hasPeao = this.selectedTemplateLids.includes("template_peao");
-        const hasVeterano = this.selectedTemplateLids.includes("template_veterano");
-        const hasComandante = this.selectedTemplateLids.includes("template_comandante");
-
-        // Aplicar modificações padrão de modelos
-        if (hasElite) {
-            stats.structure += 1;
-            stats.stress += 1;
-            stats.activations += 1;
-        }
-        if (hasUltra) {
-            stats.structure += 3;
-            stats.stress += 3;
-            stats.activations += 2;
-        }
-        if (hasVeterano) {
-            stats.structure += 1;
-            stats.stress += 1;
-        }
-        if (hasComandante) {
-            stats.structure += 1;
-            stats.stress += 1;
-        }
-
         // Compilar características ativas
         const activeFeatures = [];
 
@@ -203,12 +177,6 @@ class NpcCreatorApp extends foundry.applications.api.ApplicationV2 {
                 });
             }
         });
-
-        if (hasPeao) {
-            stats.hp = 1;
-            stats.structure = 0;
-            stats.stress = 0;
-        }
 
         this._currentBaseStats = { ...baseStats };
         this._currentCalculatedStats = { ...stats };
