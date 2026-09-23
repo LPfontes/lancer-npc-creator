@@ -1,7 +1,7 @@
 <img width="1203" height="801" alt="Captura de tela 2026-05-30 230344" src="https://github.com/user-attachments/assets/b4d01610-fe0b-4715-afa0-2ccf2c4c2ffd" />
 <img width="1204" height="804" alt="image" src="https://github.com/user-attachments/assets/ef5f068d-b792-4fce-929e-4353eac42551" />
 
-# Lancer NPC Creator 🤖
+# Lancer NPC Creator 
 
 O **Lancer NPC Creator** é um módulo independente para **Foundry VTT (compatível com a Versão 13)** desenvolvido utilizando a nova arquitetura **ApplicationV2**. Ele fornece uma interface reativa de design e criação rápida de Personagens Não-Jogadores (PNJs/NPCs) para o sistema de RPG *Lancer*.
 
@@ -12,7 +12,7 @@ Esta ferramenta se integra nativamente ao diretório de Atores (Actor Directory)
 
 ---
 
-## 🚀 Como Funciona a Lógica de Compêndio
+## Como Funciona a Lógica de Compêndio
 
 O módulo opera carregando dados de três compêndios específicos no método `_renderHTML()`. Isso garante que as características oficiais, as customizadas no módulo e os itens do mundo sejam importados para o Criador de PNJ:
 
@@ -39,7 +39,7 @@ graph TD
 
 ---
 
-## 📖 Como Usar
+## Como Usar
 
 1. **Requisitos de Compêndio:**
    Certifique-se de que os dados (Classes de PNJs, Modelos e Características) estejam disponíveis nos compêndios `lancer-npcs-basico.npc-features`, `lancer-npc-creator.custom-npc-features` e `world.npc-items`.
@@ -61,7 +61,7 @@ graph TD
 
 ---
 
-## ⚙️ Principais Funcionalidades e Regras de Negócio
+## Principais Funcionalidades e Regras de Negócio
 
 *   **Seleção e Filtragem Reativa:** Permite filtrar classes de PNJ pela sua função em combate (*role*) como *Striker*, *Support*, *Defender*, etc.
 *   **Ajuste Dinâmico de Patamar (Tier):** Ao alterar o Patamar (I, II ou III), todos os atributos base do PNJ são recalculados automaticamente de acordo com as tabelas de atributos da classe correspondente.
@@ -76,7 +76,7 @@ graph TD
 
 ---
 
-## 🛠️ Estrutura do Projeto
+## Estrutura do Projeto
 
 *   `module.json`: Manifesto do módulo indicando a dependência do script ESModule, estilos CSS, compatibilidade com o Foundry VTT V13+, definição do compêndio vazio, recomendação de pacotes e registro de idiomas suportados.
 *   `scripts/npc-creator.mjs`: Contém toda a lógica de renderização reativa, listeners de eventos, cálculo dinâmico de atributos do PNJ com `game.i18n` e carregamento inteligente dos compêndios.
