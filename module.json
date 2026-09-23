@@ -49,12 +49,6 @@
         "id": "lancer",
         "type": "system"
       }
-    ],
-    "recommends": [
-      {
-        "id": "lancer-npcs-basico",
-        "type": "module"
-      }
     ]
   }
 }
