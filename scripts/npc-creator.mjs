@@ -21,8 +21,7 @@ class NpcCreatorApp extends foundry.applications.api.ApplicationV2 {
         classes: ["npc-creator-app-window"],
         position: { width: 1200, height: 800 },
         window: {
-            title: "LANCER_NPC_CREATOR.AppTitle",
-            icon: "fa-solid fa-robot"
+            title: "LANCER_NPC_CREATOR.AppTitle"
         }
     };
 
@@ -103,6 +102,14 @@ class NpcCreatorApp extends foundry.applications.api.ApplicationV2 {
     }
 
     _renderAppContent(container) {
+        // Salvar posições de rolagem antes de atualizar
+        const configPanel = container.querySelector('.creator-config-panel');
+        const previewPanel = container.querySelector('.creator-preview-panel');
+        const scrollPositions = {
+            config: configPanel ? configPanel.scrollTop : 0,
+            preview: previewPanel ? previewPanel.scrollTop : 0
+        };
+
         container.innerHTML = "";
 
         // Filtrar as classes com base na função selecionada (role)
@@ -566,6 +573,10 @@ class NpcCreatorApp extends foundry.applications.api.ApplicationV2 {
         // Juntar colunas na janela
         container.appendChild(leftPanel);
         container.appendChild(rightPanel);
+
+        // Restaurar posições de rolagem
+        leftPanel.scrollTop = scrollPositions.config;
+        rightPanel.scrollTop = scrollPositions.preview;
     }
 }
 
@@ -587,7 +598,6 @@ Hooks.on("renderActorDirectory", (app, html, data) => {
             btn.type = "button";
             btn.className = "npc-creator-btn";
             btn.innerHTML = `
-                <i class="fa-solid fa-robot" inert=""></i>
                 <span>${game.i18n.localize("LANCER_NPC_CREATOR.SidebarButton")}</span>
             `;
             btn.addEventListener("click", () => {

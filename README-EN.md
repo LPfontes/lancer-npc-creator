@@ -1,7 +1,7 @@
 <img width="1203" height="801" alt="Captura de tela 2026-05-30 230344" src="https://github.com/user-attachments/assets/b4d01610-fe0b-4715-afa0-2ccf2c4c2ffd" />
 <img width="1204" height="804" alt="image" src="https://github.com/user-attachments/assets/ef5f068d-b792-4fce-929e-4353eac42551" />
 
-# Lancer NPC Creator 🤖
+# Lancer NPC Creator
 
 **Lancer NPC Creator** is an independent module for **Foundry VTT (compatible with Version 13)** developed using the new **ApplicationV2** architecture. It provides a reactive design interface for rapid creation of Non-Player Characters (NPCs) for the *Lancer* RPG system.
 
@@ -12,7 +12,7 @@ This tool integrates natively into Foundry VTT's Actor Directory, allowing Game 
 
 ---
 
-## 🚀 How the Compendium Logic Works
+## How the Compendium Logic Works
 
 The module operates by loading data from three specific compendiums inside the `_renderHTML()` method. This ensures that the official features, the custom features defined in the module, and world-specific items are correctly imported into the NPC Creator:
 
@@ -39,7 +39,7 @@ graph TD
 
 ---
 
-## 📖 How to Use
+## How to Use
 
 1. **Compendium Requirements:**
    Make sure the data (NPC Classes, Templates, and Features) is available in your world through the compendiums: `lancer-npcs-basico.npc-features`, `lancer-npc-creator.custom-npc-features` and `world.npc-items`.
@@ -61,7 +61,7 @@ graph TD
 
 ---
 
-## ⚙️ Key Features and Business Rules
+## Key Features and Business Rules
 
 *   **Reactive Selection & Filtering:** Allows filtering NPC classes by their combat role (*Striker*, *Support*, *Defender*, etc.).
 *   **Dynamic Tier Adjustments:** When changing the Combat Tier (I, II, or III), all base stats of the NPC are recalculated automatically according to the corresponding class's stat tables.
@@ -76,7 +76,7 @@ graph TD
 
 ---
 
-## 🛠️ Project Structure
+## Project Structure
 
 *   `module.json`: The module manifest indicating the ESModule script dependency, CSS styles, compatibility with Foundry VTT V13+, definition of empty compendiums, package recommendations, and registered language files.
 *   `scripts/npc-creator.mjs`: Contains all the reactive rendering logic, event listeners, dynamic NPC stat calculation via `game.i18n`, and smart compendium loading.
@@ -88,5 +88,5 @@ graph TD
 
 ---
 
-## 🤖 Generative AI Content Declaration
+## Generative AI Content Declaration
 This module was developed with the assistance of Generative AI tools (such as Antigravity by Google). For more details on the scope of assistance and compliance with Foundry VTT guidelines, please consult our [Generative AI Content Declaration](file:///c:/Users/lpfon/AppData/Local/FoundryVTT/Data/modules/lancer-npc-creator/GEN-AI-DECLARATION.md).
