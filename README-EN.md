@@ -12,37 +12,42 @@ This tool integrates natively into Foundry VTT's Actor Directory, allowing Game 
 
 ---
 
-## How the Compendium Logic Works
+## Dynamic Compendium Discovery & LCP Import
 
-The module operates by loading data from three specific compendiums inside the `_renderHTML()` method. This ensures that the official features, the custom features defined in the module, and world-specific items are correctly imported into the NPC Creator:
+The module dynamically loads data from **all active Item compendiums in Foundry VTT** containing NPC data (`npc_class`, `npc_template`, and `npc_feature`), with smart priority given to world compendiums and the module's custom compendium:
 
 ```mermaid
 graph TD
-    A[Start Data Loading] --> B[Load from Compendium: 'lancer-npcs-basico.npc-features']
-    B --> C[Load from Custom Compendium: 'lancer-npc-creator.custom-npc-features']
-    C --> D[Load from World Compendium: 'world.npc-items']
-    D --> E[Separate and catalog documents by type: npc_class, npc_template, npc_feature]
-    E --> F[Render Reactive Creator UI]
+    A[Start Data Loading] --> B[Dynamic Scan of game.packs]
+    B --> C[Index Classes, Templates, and Features]
+    C --> D[Intelligent Deduplication by LID]
+    D --> E[Render Reactive Creator UI]
+    
+    F["LCP File v3/v2 (.lcp/.zip)"] --> G["Integrated LCP Importer (ApplicationV2)"]
+    G --> H["Translate V3 Schemas and Active Effects"]
+    H --> I["Inject Automation Flags for Lancer Automations"]
+    I --> J["Save to Lancer Compendium or Custom Compendium"]
+    J --> B
 ```
 
-### 1. Features Compendium (`lancer-npcs-basico.npc-features`)
-*   The module accesses the compendium containing the features from the core book.
-*   If it is active and accessible, all of its documents are read and categorized according to their type (`npc_class`, `npc_template`, or `npc_feature`).
+### 1. Native LCP Package Import (Comp/Con v3 and v2)
+*   The module provides a built-in importer accessible directly via the **"Import LCP"** button in the creator interface or via the shortcut in the Actor directory.
+*   **Full V3 Compatibility:** Modern Comp/Con v3 packages (split into `npcc_*.json`, `npct_*.json`, `eidolon_layers.json`, and using `active_effects`) are automatically translated into Foundry VTT-compatible item documents.
+*   **Lancer Automations Integration:** Raw data for active effects, attack hooks, and resistances are saved in document flags (`flags['lancer-npc-import'].v3` and `flags['lancer-npc-creator'].v3`), allowing the [**Lancer Automations** module (by Agraael)](https://github.com/Agraael/lancer-automations) to instantly detect and automate them.
 
-### 2. Custom Features Compendium (`lancer-npc-creator.custom-npc-features`)
-*   The module loads custom features saved by the GM directly into the compendium natively created by this module itself.
-*   Any new NPC classes, additional templates, or custom features inserted there are automatically and seamlessly merged with the official records.
-
-### 3. World Items Compendium (`world.npc-items`)
-*   The module also dynamically loads items saved directly inside the world's own compendium (`world.npc-items`).
-*   This allows you to seamlessly bring NPC classes, templates, or resources defined specifically for your current game world straight into the creator interface.
+### 2. Dynamic Compendium Discovery
+*   No longer tied to hardcoded pack names: any active pack in Foundry with `npc_class`, `npc_template`, or `npc_feature` is indexed automatically.
+*   Translation packages (such as `lancer-npc-data-pt_BR.lcp`) and third-party expansion packs (Dustgrave, Wallflower, etc.) are consolidated by `lid`.
 
 ---
 
 ## How to Use
 
-1. **Compendium Requirements:**
-   Make sure the data (NPC Classes, Templates, and Features) is available in your world through the compendiums: `lancer-npcs-basico.npc-features`, `lancer-npc-creator.custom-npc-features` and `world.npc-items`.
+1. **Importing NPC Data (LCP):**
+   * Open the NPC Creator or click the import shortcut in the Actor directory header.
+   * Click **Import LCP** and select (or drag and drop) your desired `.lcp` or `.zip` file (e.g. `lancer-npc-data-pt_BR.lcp`).
+   * Review the inspected contents (classes, templates, features) and click **Confirm & Import**.
+   * The NPC Creator will reload immediately with all newly imported options!
 
 2. **Opening the Creator:**
    * Go to the **Actors** tab in Foundry VTT's sidebar.
@@ -80,11 +85,21 @@ graph TD
 
 *   `module.json`: The module manifest indicating the ESModule script dependency, CSS styles, compatibility with Foundry VTT V13+, definition of empty compendiums, package recommendations, and registered language files.
 *   `scripts/npc-creator.mjs`: Contains all the reactive rendering logic, event listeners, dynamic NPC stat calculation via `game.i18n`, and smart compendium loading.
+*   `scripts/lcp-import-dialog.mjs`: ApplicationV2 modal interface for uploading, inspecting, and importing LCP files with progress tracking.
+*   `scripts/v3-lcp-shim.mjs`: Robust translation engine for Comp/Con v3 LCPs, active effect translation, and automation flag preservation.
 *   `styles/npc-creator.css`: Modern and reactive styling inspired by *Lancer*'s tactical and futuristic interface.
 *   `lang/`: Directory containing JSON translation files for the creator's dynamic localization:
-    *   `pt-BR.json`: Original Portuguese Brazilian translation keys and terms.
+    *   `pt-BR.json`: Portuguese Brazilian translation keys and terms.
     *   `en.json`: English translation keys and adapted game terminology.
-*   `packs/custom-npc-features/`: Directory hosting the empty item compendium **`lancer-npc-creator.custom-npc-features`** ("Criador de PNJ - Características Customizadas") available natively to be filled by the user with their own custom classes, templates, or features.
+*   `packs/custom-npc-features/`: Directory hosting the item compendium **`lancer-npc-creator.custom-npc-features`** ("NPC Creator - Custom Features") used to store imported and custom classes, templates, or features.
+
+---
+
+## Acknowledgements & Credits
+
+This module integrates with and builds upon outstanding community tools for Lancer on Foundry VTT:
+* **[Agraael/lancer-automations](https://github.com/Agraael/lancer-automations)**: The premier combat and item automation engine for the Lancer RPG system on Foundry VTT, created by **Agraael**. All v3 active effects, flags, and item modifications are designed to interoperate seamlessly with Lancer Automations.
+* **[Agraael/Lancer-vtt-NPC-import](https://github.com/Agraael/Lancer-vtt-NPC-import-Macro)**: The Comp/Con v3 LCP translation logic (`v3-lcp-shim`) and schema normalization were adapted from the foundational work created by **Agraael**.
 
 ---
 

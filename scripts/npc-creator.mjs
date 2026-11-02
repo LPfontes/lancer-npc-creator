@@ -1,6 +1,9 @@
 // Criador de PNJ do Lancer - ApplicationV2 Native Implementation
 // Módulo Independente: lancer-npc-creator
 
+import { LcpImportDialog } from "./lcp-import-dialog.mjs";
+import { registerV3LcpShim } from "./v3-lcp-shim.mjs";
+
 class NpcCreatorApp extends foundry.applications.api.ApplicationV2 {
     constructor(options = {}) {
         super(options);
@@ -29,64 +32,86 @@ class NpcCreatorApp extends foundry.applications.api.ApplicationV2 {
         content.replaceChildren(result);
     }
 
-    async _renderHTML(context, options) {
-        // Carrega os documentos dos compêndios caso ainda não estejam carregados
+    async loadCompendiums(forceReload = false) {
+        if (!forceReload && this.classes.length > 0) return;
+
+        console.log("Lancer NPC Creator | Buscando classes, modelos e características em todos os compêndios...");
+
+        const classMap = new Map();
+        const templateMap = new Map();
+        const featureMap = new Map();
+
+        // Compêndios prioritários conhecidos
+        const priorityPacks = [
+            "lancer-npc-creator.custom-npc-features",
+            "world.npc-items",
+            "lancer-npcs-basico.npc-features"
+        ];
+
+        // Obter todos os pacotes de itens registrados no jogo
+        const itemPacks = Array.from(game.packs.values()).filter(p => p.metadata.type === "Item");
+
+        // Ordenar colocando pacotes customizados e de mundo em prioridade sobre pacotes do sistema
+        itemPacks.sort((a, b) => {
+            const aPrio = priorityPacks.includes(a.collection) ? 2 : (a.metadata.packageType === "world" ? 1 : 0);
+            const bPrio = priorityPacks.includes(b.collection) ? 2 : (b.metadata.packageType === "world" ? 1 : 0);
+            return bPrio - aPrio;
+        });
+
+        for (const pack of itemPacks) {
+            try {
+                const index = await pack.getIndex({ fields: ["system.lid", "type"] });
+                const hasNpcContent = index.some(i => ["npc_class", "npc_template", "npc_feature"].includes(i.type));
+                if (!hasNpcContent) continue;
+
+                console.log(`Lancer NPC Creator | Carregando itens de: ${pack.collection}`);
+                const docs = await pack.getDocuments();
+                for (const doc of docs) {
+                    const lid = doc.system?.lid || doc._id;
+                    if (doc.type === "npc_class") {
+                        if (!classMap.has(lid) || pack.collection === "lancer-npc-creator.custom-npc-features") {
+                            classMap.set(lid, doc);
+                        }
+                    } else if (doc.type === "npc_template") {
+                        if (!templateMap.has(lid) || pack.collection === "lancer-npc-creator.custom-npc-features") {
+                            templateMap.set(lid, doc);
+                        }
+                    } else if (doc.type === "npc_feature") {
+                        if (!featureMap.has(lid) || pack.collection === "lancer-npc-creator.custom-npc-features") {
+                            featureMap.set(lid, doc);
+                        }
+                    }
+                }
+            } catch (err) {
+                console.warn(`Lancer NPC Creator | Erro ao carregar compêndio ${pack.collection}:`, err);
+            }
+        }
+
+        this.classes = Array.from(classMap.values()).sort((a, b) => a.name.localeCompare(b.name));
+        this.templates = Array.from(templateMap.values()).sort((a, b) => a.name.localeCompare(b.name));
+        this.features = Array.from(featureMap.values()).sort((a, b) => a.name.localeCompare(b.name));
+
         if (this.classes.length === 0) {
-            const allNPCClasses = [];
-            const allNPCTemplates = [];
-            const allNPCFeatures = [];
+            ui.notifications.error(game.i18n.localize("LANCER_NPC_CREATOR.ErrorNoClasses"));
+        } else {
+            console.log(`Lancer NPC Creator | Sucesso ao inicializar. Encontrados: ${this.classes.length} classes, ${this.templates.length} templates, ${this.features.length} características.`);
+        }
+    }
 
-            // 1. Carregar do compêndio básico de características
-            const basicPack = game.packs.get("lancer-npcs-basico.npc-features");
-            if (basicPack) {
-                try {
-                    console.log("Lancer NPC Creator | Carregando dados do compêndio básico: lancer-npcs-basico.npc-features");
-                    const docs = await basicPack.getDocuments();
-                    allNPCClasses.push(...docs.filter(d => d.type === "npc_class"));
-                    allNPCTemplates.push(...docs.filter(d => d.type === "npc_template"));
-                    allNPCFeatures.push(...docs.filter(d => d.type === "npc_feature"));
-                } catch (err) {
-                    console.warn("Lancer NPC Creator | Erro ao carregar o compêndio básico:", err);
-                }
-            }
+    async reloadCompendiums() {
+        this.classes = [];
+        this.templates = [];
+        this.features = [];
+        await this.loadCompendiums(true);
+        if (this.classes.length > 0 && !this.classes.some(c => c.system.lid === this.selectedClassLid)) {
+            this.selectedClassLid = this.classes[0].system.lid;
+        }
+        this.render({ force: true });
+    }
 
-            // 2. Carregar do compêndio customizado criado no módulo
-            const customPack = game.packs.get("lancer-npc-creator.custom-npc-features");
-            if (customPack) {
-                try {
-                    console.log("Lancer NPC Creator | Carregando dados do compêndio customizado: lancer-npc-creator.custom-npc-features");
-                    const docs = await customPack.getDocuments();
-                    allNPCClasses.push(...docs.filter(d => d.type === "npc_class"));
-                    allNPCTemplates.push(...docs.filter(d => d.type === "npc_template"));
-                    allNPCFeatures.push(...docs.filter(d => d.type === "npc_feature"));
-                } catch (err) {
-                    console.warn("Lancer NPC Creator | Erro ao carregar o compêndio customizado:", err);
-                }
-            }
-
-            // 3. Carregar do compêndio oficial de itens do próprio sistema Lancer
-            const lancerItemsPack = game.packs.get("world.npc-items");
-            if (lancerItemsPack) {
-                try {
-                    console.log("Lancer NPC Creator | Carregando dados do compêndio: world.npc-items");
-                    const docs = await lancerItemsPack.getDocuments();
-                    allNPCClasses.push(...docs.filter(d => d.type === "npc_class"));
-                    allNPCTemplates.push(...docs.filter(d => d.type === "npc_template"));
-                    allNPCFeatures.push(...docs.filter(d => d.type === "npc_feature"));
-                } catch (err) {
-                    console.warn("Lancer NPC Creator | Erro ao carregar o compêndio world.npc-items:", err);
-                }
-            }
-
-            this.classes = allNPCClasses;
-            this.templates = allNPCTemplates;
-            this.features = allNPCFeatures;
-
-            if (this.classes.length === 0) {
-                ui.notifications.error(game.i18n.localize("LANCER_NPC_CREATOR.ErrorNoClasses"));
-            } else {
-                console.log(`Lancer NPC Creator | Sucesso ao inicializar. Encontrados: ${this.classes.length} classes, ${this.templates.length} templates, ${this.features.length} características.`);
-            }
+    async _renderHTML(context, options) {
+        if (this.classes.length === 0) {
+            await this.loadCompendiums();
         }
 
         if (!this.selectedClassLid && this.classes.length > 0) {
@@ -163,12 +188,33 @@ class NpcCreatorApp extends foundry.applications.api.ApplicationV2 {
             }
         });
 
-        // Aplicar bônus das características (como Esquiva Aprimorada / Esquiva Sobrenatural)
+        const normalizeStatKey = (key) => {
+            const k = String(key || "").toLowerCase();
+            if (k === "evade") return "evasion";
+            if (k === "sensor") return "sensor_range";
+            if (k === "heat_cap") return "heatcap";
+            return k;
+        };
+
+        // Aplicar bônus das características (como Esquiva Aprimorada, Reforçado, etc.)
         activeFeatures.forEach(feat => {
-            if (feat.system.bonus) {
+            // Suporte ao formato objeto legado (feat.system.bonus)
+            if (feat.system.bonus && typeof feat.system.bonus === "object" && !Array.isArray(feat.system.bonus)) {
                 Object.entries(feat.system.bonus).forEach(([statName, val]) => {
-                    if (stats[statName] !== undefined && val !== null) {
-                        stats[statName] += Number(val);
+                    const normKey = normalizeStatKey(statName);
+                    if (stats[normKey] !== undefined && val !== null && !isNaN(val)) {
+                        stats[normKey] += Number(val);
+                    }
+                });
+            }
+
+            // Suporte ao formato oficial Lancer / Comp/Con v3 (feat.system.bonuses = [{ id, val }])
+            if (Array.isArray(feat.system.bonuses)) {
+                feat.system.bonuses.forEach(b => {
+                    if (!b || !b.id) return;
+                    const normKey = normalizeStatKey(b.id);
+                    if (stats[normKey] !== undefined && b.val !== null && !isNaN(b.val)) {
+                        stats[normKey] += Number(b.val);
                     }
                 });
             }
@@ -176,10 +222,11 @@ class NpcCreatorApp extends foundry.applications.api.ApplicationV2 {
 
         // Aplicar overrides das características (como Peão forcando HP=1)
         activeFeatures.forEach(feat => {
-            if (feat.system.override) {
+            if (feat.system.override && typeof feat.system.override === "object") {
                 Object.entries(feat.system.override).forEach(([statName, val]) => {
-                    if (stats[statName] !== undefined && val !== null) {
-                        stats[statName] = Number(val);
+                    const normKey = normalizeStatKey(statName);
+                    if (stats[normKey] !== undefined && val !== null && !isNaN(val)) {
+                        stats[normKey] = Number(val);
                     }
                 });
             }
@@ -192,6 +239,19 @@ class NpcCreatorApp extends foundry.applications.api.ApplicationV2 {
         // Coluna Esquerda: Painel de Configurações
         const leftPanel = document.createElement("div");
         leftPanel.className = "creator-config-panel";
+
+        // Barra Superior de Ações (Importar LCP)
+        const topActions = document.createElement("div");
+        topActions.className = "creator-actions-bar";
+        topActions.innerHTML = `
+            <button type="button" class="btn-open-lcp-import">
+                <i class="fa-solid fa-file-import"></i> ${game.i18n.localize("LANCER_NPC_CREATOR.ImportLCP")}
+            </button>
+        `;
+        topActions.querySelector(".btn-open-lcp-import").addEventListener("click", () => {
+            new LcpImportDialog({ parentApp: this }).render({ force: true });
+        });
+        leftPanel.appendChild(topActions);
 
         // Seletor de Função (Filtro)
         const filterGroup = document.createElement("div");
@@ -580,7 +640,12 @@ class NpcCreatorApp extends foundry.applications.api.ApplicationV2 {
     }
 }
 
-// Inserir botão de acesso no diretório de atores na barra lateral do Foundry (compatível com V13 / ApplicationV2)
+// Inicializar shims de compatibilidade v3 LCP no arranque do Foundry
+Hooks.once("init", () => {
+    registerV3LcpShim();
+});
+
+// Inserir botões de acesso no diretório de atores na barra lateral do Foundry (compatível com V13 / ApplicationV2)
 Hooks.on("renderActorDirectory", (app, html, data) => {
     if (!game.user.isGM) return;
 
@@ -592,18 +657,33 @@ Hooks.on("renderActorDirectory", (app, html, data) => {
     // Encontrar a seção de botões de cabeçalho
     const headerActions = element.querySelector(".header-actions.action-buttons");
     if (headerActions) {
-        // Verificar se o botão já existe para evitar duplicações
+        // 1. Botão do Criador de PNJ
         if (!headerActions.querySelector(".npc-creator-btn")) {
             const btn = document.createElement("button");
             btn.type = "button";
             btn.className = "npc-creator-btn";
             btn.innerHTML = `
-                <span>${game.i18n.localize("LANCER_NPC_CREATOR.SidebarButton")}</span>
+                <i class="fa-solid fa-robot"></i> <span>${game.i18n.localize("LANCER_NPC_CREATOR.SidebarButton")}</span>
             `;
             btn.addEventListener("click", () => {
                 new NpcCreatorApp().render({ force: true });
             });
             headerActions.appendChild(btn);
+        }
+
+        // 2. Botão de Atalho para Importação de LCP
+        if (!headerActions.querySelector(".npc-creator-import-btn")) {
+            const importBtn = document.createElement("button");
+            importBtn.type = "button";
+            importBtn.className = "npc-creator-import-btn";
+            importBtn.title = game.i18n.localize("LANCER_NPC_CREATOR.ImportLCPTooltip");
+            importBtn.innerHTML = `
+                <i class="fa-solid fa-file-import"></i>
+            `;
+            importBtn.addEventListener("click", () => {
+                new LcpImportDialog().render({ force: true });
+            });
+            headerActions.appendChild(importBtn);
         }
     }
 });

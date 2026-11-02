@@ -12,37 +12,42 @@ Esta ferramenta se integra nativamente ao diretório de Atores (Actor Directory)
 
 ---
 
-## Como Funciona a Lógica de Compêndio
+## Como Funciona a Descoberta de Compêndios e Importação de LCPs
 
-O módulo opera carregando dados de três compêndios específicos no método `_renderHTML()`. Isso garante que as características oficiais, as customizadas no módulo e os itens do mundo sejam importados para o Criador de PNJ:
+O módulo opera carregando dados dinamicamente de **todos os compêndios ativos no Foundry VTT** que contenham dados de PNJ (`npc_class`, `npc_template` e `npc_feature`), com prioridade inteligente para compêndios do mundo e o compêndio customizado do módulo:
 
 ```mermaid
 graph TD
-    A[Início do Carregamento de Dados] --> B[Carrega do Compêndio: 'lancer-npcs-basico.npc-features']
-    B --> C[Carrega do Compêndio Customizado: 'lancer-npc-creator.custom-npc-features']
-    C --> D[Carrega do Compêndio do Mundo: 'world.npc-items']
-    D --> E[Separa e cataloga os documentos por tipo: npc_class, npc_template, npc_feature]
-    E --> F[Renderiza Interface Reativa do Criador]
+    A[Início do Carregamento de Dados] --> B[Varredura Dinâmica em game.packs]
+    B --> C[Indexação de Classes, Modelos e Características]
+    C --> D[Deduplicação Inteligente por LID]
+    D --> E[Renderização Reativa da Interface do Criador]
+    
+    F["Arquivo LCP v3/v2 (.lcp/.zip)"] --> G["Importador Integrado de LCP (ApplicationV2)"]
+    G --> H["Conversão de Schemas V3 e Active Effects"]
+    H --> I["Injeção de Flags para o Lancer Automations"]
+    I --> J["Salvar no Compêndio do Lancer ou Compêndio Customizado"]
+    J --> B
 ```
 
-### 1. Compêndio de Características (`lancer-npcs-basico.npc-features`)
-*   O módulo acessa o compêndio contendo as características do livro básico.
-*   Se estiver ativo e acessível, todos os seus documentos são lidos e categorizados de acordo com seu tipo (`npc_class`, `npc_template` ou `npc_feature`).
+### 1. Importação Nativa de Pacotes LCP (Comp/Con v3 e v2)
+*   O módulo possui um importador nativo acessível diretamente pelo botão **"Importar LCP"** na interface do criador ou pelo atalho no diretório de atores.
+*   **Compatibilidade V3 Completa:** Pacotes modernos do Comp/Con v3 (com divisão em `npcc_*.json`, `npct_*.json`, `eidolon_layers.json` e `active_effects`) são automaticamente convertidos e traduzidos para documentos de itens perfeitamente compatíveis com o Foundry VTT.
+*   **Integração com Lancer Automations:** As informações brutas de efeitos ativos, gatilhos de ataque e resistências são salvas nas flags dos documentos (`flags['lancer-npc-import'].v3` e `flags['lancer-npc-creator'].v3`), garantindo que o módulo [**Lancer Automations** (por Agraael)](https://github.com/Agraael/lancer-automations) reconheça e automatize os itens instantaneamente.
 
-### 2. Compêndio de Características Customizadas (`lancer-npc-creator.custom-npc-features`)
-*   O módulo carrega as características personalizadas salvas pelo GM diretamente no compêndio criado nativamente pelo próprio módulo.
-*   Quaisquer novas classes de PNJ, modelos adicionais ou características customizadas inseridas ali são mescladas com os registros de forma automática e transparente.
-
-### 3. Compêndio de Itens do Mundo (`world.npc-items`)
-*   O módulo também carrega dinamicamente os itens salvos diretamente no compêndio do próprio mundo (`world.npc-items`).
-*   Isso permite que você traga classes de PNJ, modelos ou recursos definidos especificamente no seu jogo atual diretamente para a interface de criação de forma nativa.
+### 2. Descoberta Dinâmica de Compêndios
+*   O módulo não depende mais de nomes fixos de compêndios: qualquer compêndio ativo no Foundry que possua itens do tipo `npc_class`, `npc_template` ou `npc_feature` é indexado automaticamente.
+*   Se você possuir um pacote de tradução (como o `lancer-npc-data-pt_BR.lcp`) ou pacotes de expansões de terceiros (Dustgrave, Wallflower, etc.), eles são detectados e consolidados por `lid`.
 
 ---
 
 ## Como Usar
 
-1. **Requisitos de Compêndio:**
-   Certifique-se de que os dados (Classes de PNJs, Modelos e Características) estejam disponíveis nos compêndios `lancer-npcs-basico.npc-features`, `lancer-npc-creator.custom-npc-features` e `world.npc-items`.
+1. **Importando Dados de PNJ (LCP):**
+   * Abra o Criador de PNJ ou clique no ícone de importação no cabeçalho do diretório de Atores.
+   * Clique em **Importar LCP** e selecione (ou arraste) o arquivo `.lcp` ou `.zip` desejado (por exemplo, `lancer-npc-data-pt_BR.lcp`).
+   * Confira os dados inspecionados (quantidade de classes, templates e características) e clique em **Confirmar e Importar**.
+   * O criador será atualizado imediatamente com todas as novas opções disponíveis!
 
 2. **Abrindo o Criador:**
    * Acesse a aba **Atores (Actors)** na barra lateral do Foundry VTT.
@@ -88,5 +93,13 @@ graph TD
 
 ---
 
-## 🤖 Declaração de Uso de IA / Generative AI Declaration
+## Créditos e Agradecimentos
+
+Este módulo utiliza e integra tecnologias da comunidade Lancer Foundry VTT:
+* **[Agraael/lancer-automations](https://github.com/Agraael/lancer-automations)**: Módulo de automações avançadas para o sistema Lancer no Foundry VTT desenvolvido por **Agraael**. Toda a compatibilidade com efeitos ativos, bônus dinâmicos e flags de dados v3 foi projetada para interoperar perfeitamente com este sistema.
+* **[Agraael/Lancer-vtt-NPC-import](https://github.com/Agraael/Lancer-vtt-NPC-import-Macro)**: O motor de tradução de LCPs Comp/Con v3 (`v3-lcp-shim`) e normalização de esquemas de dados foi baseado e adaptado diretamente do trabalho de **Agraael**.
+
+---
+
+## Declaração de Uso de IA / Generative AI Declaration
 Este módulo foi desenvolvido com o auxílio de ferramentas de IA Generativa (como o Antigravity desenvolvido pela Google). Para mais detalhes sobre o escopo e conformidade com as diretrizes do Foundry VTT, consulte a nossa [Declaração de Conteúdo de IA Generativa](file:///c:/Users/lpfon/AppData/Local/FoundryVTT/Data/modules/lancer-npc-creator/GEN-AI-DECLARATION.md).
