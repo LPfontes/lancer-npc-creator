@@ -189,44 +189,108 @@ class NpcCreatorApp extends foundry.applications.api.ApplicationV2 {
         });
 
         const normalizeStatKey = (key) => {
-            const k = String(key || "").toLowerCase();
+            const k = String(key || "").trim().toLowerCase();
             if (k === "evade") return "evasion";
             if (k === "sensor") return "sensor_range";
             if (k === "heat_cap") return "heatcap";
+            if (k === "agility") return "agi";
+            if (k === "systems") return "sys";
+            if (k === "engineering") return "eng";
+            if (k === "sizes") return "size";
             return k;
+        };
+
+        const resolveTierStatValue = (rawVal) => {
+            if (rawVal === null || rawVal === undefined) return NaN;
+            if (Array.isArray(rawVal)) {
+                const picked = rawVal[tierIndex] !== undefined ? rawVal[tierIndex] : rawVal[0];
+                return Number(picked);
+            }
+            if (typeof rawVal === "string" && (rawVal.includes("/") || rawVal.includes(","))) {
+                const parts = rawVal.split(/[\/,]/).map(s => s.trim()).filter(Boolean);
+                const picked = parts[tierIndex] !== undefined ? parts[tierIndex] : parts[0];
+                return Number(picked);
+            }
+            return Number(rawVal);
+        };
+
+        const extractFeatureBonusesList = (feat) => {
+            if (Array.isArray(feat.system?.bonuses) && feat.system.bonuses.length > 0) {
+                return feat.system.bonuses;
+            }
+            const v3Entries = feat.flags?.["lancer-npc-creator"]?.v3?.entries ?? feat.flags?.["lancer-npc-import"]?.v3?.entries;
+            if (Array.isArray(v3Entries)) {
+                const collected = [];
+                v3Entries.forEach(entry => {
+                    if ( /^bonuses\.\d+$/.test(entry?.path || "") && Array.isArray(entry?.data?.bonuses)) {
+                        collected.push(...entry.data.bonuses);
+                    }
+                });
+                if (collected.length > 0) return collected;
+            }
+            return [];
         };
 
         // Aplicar bônus das características (como Esquiva Aprimorada, Reforçado, etc.)
         activeFeatures.forEach(feat => {
-            // Suporte ao formato objeto legado (feat.system.bonus)
-            if (feat.system.bonus && typeof feat.system.bonus === "object" && !Array.isArray(feat.system.bonus)) {
-                Object.entries(feat.system.bonus).forEach(([statName, val]) => {
-                    const normKey = normalizeStatKey(statName);
-                    if (stats[normKey] !== undefined && val !== null && !isNaN(val)) {
-                        stats[normKey] += Number(val);
+            const appliedBonusKeys = new Set();
+            const featureBonuses = extractFeatureBonusesList(feat);
+
+            // 1. Suporte ao formato oficial Lancer / Comp/Con v3 (feat.system.bonuses = [{ id, val, overwrite, replace }])
+            if (featureBonuses.length > 0) {
+                featureBonuses.forEach(b => {
+                    if (!b || !b.id || b.condition) return;
+                    if (b.val === undefined || b.val === null) return;
+                    if ((b.accuracy || b.difficulty) && Number(b.val) === 0) return;
+
+                    const rawId = String(b.id).trim().toLowerCase();
+                    if (b.overwrite === true || b.replace === true || rawId === "sizes") return;
+
+                    const normKey = normalizeStatKey(rawId);
+                    const numVal = resolveTierStatValue(b.val);
+                    if (stats[normKey] !== undefined && Number.isFinite(numVal)) {
+                        stats[normKey] += numVal;
+                        appliedBonusKeys.add(normKey);
                     }
                 });
             }
 
-            // Suporte ao formato oficial Lancer / Comp/Con v3 (feat.system.bonuses = [{ id, val }])
-            if (Array.isArray(feat.system.bonuses)) {
-                feat.system.bonuses.forEach(b => {
-                    if (!b || !b.id) return;
-                    const normKey = normalizeStatKey(b.id);
-                    if (stats[normKey] !== undefined && b.val !== null && !isNaN(b.val)) {
-                        stats[normKey] += Number(b.val);
+            // 2. Suporte ao formato objeto v2 (feat.system.bonus) sem duplicar chaves já aplicadas via bonuses
+            if (feat.system.bonus && typeof feat.system.bonus === "object" && !Array.isArray(feat.system.bonus)) {
+                Object.entries(feat.system.bonus).forEach(([statName, val]) => {
+                    const normKey = normalizeStatKey(statName);
+                    if (appliedBonusKeys.has(normKey)) return;
+                    const numVal = resolveTierStatValue(val);
+                    if (stats[normKey] !== undefined && Number.isFinite(numVal)) {
+                        stats[normKey] += numVal;
                     }
                 });
             }
         });
 
-        // Aplicar overrides das características (como Peão forcando HP=1)
+        // Aplicar overrides das características (como Peão forçando HP=1, Estrutura=1, Estresse=1 ou Armadura Argus=6)
         activeFeatures.forEach(feat => {
+            const featureBonuses = extractFeatureBonusesList(feat);
+            if (featureBonuses.length > 0) {
+                featureBonuses.forEach(b => {
+                    if (!b || !b.id || b.condition) return;
+                    const rawId = String(b.id).trim().toLowerCase();
+                    if (b.overwrite !== true && b.replace !== true && rawId !== "sizes") return;
+
+                    const normKey = normalizeStatKey(rawId);
+                    const numVal = resolveTierStatValue(b.val);
+                    if (stats[normKey] !== undefined && Number.isFinite(numVal)) {
+                        stats[normKey] = numVal;
+                    }
+                });
+            }
+
             if (feat.system.override && typeof feat.system.override === "object") {
                 Object.entries(feat.system.override).forEach(([statName, val]) => {
                     const normKey = normalizeStatKey(statName);
-                    if (stats[normKey] !== undefined && val !== null && !isNaN(val)) {
-                        stats[normKey] = Number(val);
+                    const numVal = resolveTierStatValue(val);
+                    if (stats[normKey] !== undefined && Number.isFinite(numVal)) {
+                        stats[normKey] = numVal;
                     }
                 });
             }
@@ -612,10 +676,39 @@ class NpcCreatorApp extends foundry.applications.api.ApplicationV2 {
 
                 // Inserir todas as características ativas
                 activeFeatures.forEach(feat => {
-                    actorData.items.push(feat.toObject());
+                    const featObj = feat.toObject();
+                    const featureBonuses = extractFeatureBonusesList(feat);
+                    if (featureBonuses.length > 0) {
+                        featObj.system.bonus = featObj.system.bonus && typeof featObj.system.bonus === "object" ? { ...featObj.system.bonus } : {};
+                        featObj.system.override = featObj.system.override && typeof featObj.system.override === "object" ? { ...featObj.system.override } : {};
+                        featureBonuses.forEach(b => {
+                            if (!b || !b.id || b.condition) return;
+                            if (b.val === undefined || b.val === null) return;
+                            if ((b.accuracy || b.difficulty) && Number(b.val) === 0) return;
+                            const rawId = String(b.id).trim().toLowerCase();
+                            const normKey = normalizeStatKey(rawId);
+                            const numVal = resolveTierStatValue(b.val);
+                            if (!Number.isFinite(numVal)) return;
+                            if (b.overwrite === true || b.replace === true || rawId === "sizes") {
+                                featObj.system.override[normKey] = numVal;
+                            } else if (featObj.system.bonus[normKey] === null || featObj.system.bonus[normKey] === undefined) {
+                                featObj.system.bonus[normKey] = numVal;
+                            }
+                        });
+                    }
+                    actorData.items.push(featObj);
                 });
 
                 const actor = await Actor.create(actorData);
+                if (actor.npcClassSwapPromises?.length > 0) {
+                    await Promise.all(actor.npcClassSwapPromises);
+                    actor.npcClassSwapPromises = [];
+                }
+                await actor.update({
+                    "system.hp.value": customStats.hp,
+                    "system.structure.value": customStats.structure,
+                    "system.stress.value": customStats.stress
+                });
                 ui.notifications.info(game.i18n.format("LANCER_NPC_CREATOR.GenerateSuccess", { name: actor.name }));
 
                 // Abrir a ficha do novo PNJ automaticamente

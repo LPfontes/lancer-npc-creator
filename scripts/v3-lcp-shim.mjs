@@ -20,8 +20,9 @@ export async function getJSZip()
         _jszipPromise = (async () => {
             // 1. Tentar importar do script local empacotado no módulo
             try {
-                await import("./vendor/jszip.min.js");
+                const localMod = await import("./vendor/jszip.min.js");
                 if (globalThis.JSZip) return globalThis.JSZip;
+                if (localMod?.default || localMod?.JSZip) return localMod.default || localMod.JSZip;
             } catch (_) {}
 
             // 2. Tentar CDN caso esteja online
@@ -967,6 +968,74 @@ function renderNpcActionsAsHtml(actions, existing = "", knownTrigger = "")
     return blocks.join("<br><br>");
 }
 
+const NPC_STAT_BONUS_MAP = {
+    hp: "hp",
+    armor: "armor",
+    evade: "evasion",
+    evasion: "evasion",
+    edef: "edef",
+    heatcap: "heatcap",
+    heat_cap: "heatcap",
+    speed: "speed",
+    sensor: "sensor_range",
+    sensor_range: "sensor_range",
+    save: "save",
+    hull: "hull",
+    agility: "agi",
+    agi: "agi",
+    systems: "sys",
+    sys: "sys",
+    engineering: "eng",
+    eng: "eng",
+    size: "size",
+    sizes: "size",
+    structure: "structure",
+    stress: "stress",
+    activations: "activations"
+};
+
+function translateNpcFeatureBonuses(feature)
+{
+    if (!feature || !Array.isArray(feature.bonuses) || !feature.bonuses.length)
+        return;
+
+    feature.__npc_bonuses = feature.bonuses.map(b => (b && typeof b === "object" ? { ...b } : b));
+
+    for (const b of feature.bonuses)
+    {
+        if (!b || typeof b !== "object" || !b.id || b.condition)
+            continue;
+        if (b.val === undefined || b.val === null)
+            continue;
+        if ((b.accuracy || b.difficulty) && Number(b.val) === 0)
+            continue;
+
+        const rawId = String(b.id).trim().toLowerCase();
+        const targetKey = NPC_STAT_BONUS_MAP[rawId];
+        if (!targetKey)
+            continue;
+
+        const rawVal = Array.isArray(b.val) ? b.val[0] : b.val;
+        const numVal = Number(rawVal);
+        if (!Number.isFinite(numVal))
+            continue;
+
+        const isOverride = b.overwrite === true || b.replace === true || rawId === "sizes";
+        if (isOverride)
+        {
+            if (!feature.override || typeof feature.override !== "object")
+                feature.override = {};
+            feature.override[targetKey] = numVal;
+        }
+        else
+        {
+            if (!feature.bonus || typeof feature.bonus !== "object")
+                feature.bonus = {};
+            feature.bonus[targetKey] = (Number(feature.bonus[targetKey]) || 0) + numVal;
+        }
+    }
+}
+
 function translateNpcFeatureCommon(feature, droppedAE)
 {
     if (!feature)
@@ -976,6 +1045,7 @@ function translateNpcFeatureCommon(feature, droppedAE)
         feature.type = featureType;
     markDeprecated(feature);
     feature.tags = (Array.isArray(feature.tags) ? feature.tags : []).filter(tag => !V3_ONLY_NPC_TAGS.has(tag?.id));
+    translateNpcFeatureBonuses(feature);
     if (Array.isArray(feature.actions) && feature.actions.length)
     {
         for (const action of feature.actions)
@@ -1194,7 +1264,7 @@ const ACTION_LIST_KEYS = ["actions", "sub_actions", "active_actions", "passive_a
 const BONUS_LIST_KEYS = ["bonuses", "active_bonuses", "passive_bonuses"];
 const PURE_BONUS_FIELDS = ["id", "val", "accuracy", "difficulty", "damage_types", "range_types", "weapon_types", "weapon_sizes", "overwrite", "replace", "condition", "max"];
 
-const DATA_BONUS_IDS = ["immunity", "resistance", "threat", "knockback", "boost", "activations", "heat_cap", "thrown", "min_range", "extra_action"];
+const DATA_BONUS_IDS = ["immunity", "resistance", "threat", "knockback", "boost", "activations", "heat_cap", "thrown", "min_range", "extra_action", ...Object.keys(NPC_STAT_BONUS_MAP)];
 const FLAT_BONUS_IDS = ["attack", "grapple", "ram"];
 
 function isDataBonus(bonus)
@@ -1791,8 +1861,16 @@ export async function translateV3LcpBlob(inputBlob)
     for (const tmpl of allTemplates)
         rebuildFeatureListsOnClass(tmpl, allFeatures);
 
+    const savedNpcBonuses = new Map();
     for (const feat of allFeatures)
+    {
+        if (feat.__npc_bonuses)
+        {
+            savedNpcBonuses.set(feat, feat.__npc_bonuses);
+            delete feat.__npc_bonuses;
+        }
         stripSidecar(feat);
+    }
 
     if (allClasses.length)
         outZip.file("npc_classes.json", JSON.stringify(allClasses, null, 2));
@@ -1800,6 +1878,11 @@ export async function translateV3LcpBlob(inputBlob)
         outZip.file("npc_features.json", JSON.stringify(allFeatures, null, 2));
     if (allTemplates.length)
         outZip.file("npc_templates.json", JSON.stringify(allTemplates, null, 2));
+
+    for (const [feat, origBonuses] of savedNpcBonuses.entries())
+    {
+        feat.bonuses = origBonuses;
+    }
 
     // Apply v3→v2 translators on each non-NPC bucket. Order: weapons/systems/mods first
     // so frames' flattenIntegrated fan-out can append into the same buckets before emit.
@@ -1867,7 +1950,10 @@ export async function getLancerApi()
     // Signature scan survives minified-name reshuffles between v3.x versions.
     const findFn = (mod, preferred, sig) =>
     {
-        if (typeof mod?.[preferred] === "function") return mod[preferred];
+        if (typeof mod?.[preferred] === "function")
+        {
+            try { if (sig.test(mod[preferred].toString())) return mod[preferred]; } catch (_) {}
+        }
         for (const value of Object.values(mod ?? {}))
             if (typeof value === "function") { try { if (sig.test(value.toString())) return value; } catch (_) {} }
         return null;
@@ -2363,8 +2449,9 @@ let _muting = false;
 function wireLcpManager(_app, html)
 {
     const root = html instanceof HTMLElement ? html : html?.[0] ?? html;
-    if (!root || root.dataset.lniV3Wired === "1")
+    if (!root || root.dataset.lncV3Wired === "1")
         return;
+    root.dataset.lncV3Wired = "1";
     root.dataset.lniV3Wired = "1";
 
     let inFlight = false;
@@ -2506,31 +2593,34 @@ export async function importDirectlyToCustomCompendium({ translated, onProgress 
             system: {
                 lid: cls.id,
                 role: cls.role || "striker",
+                flavor: cls.info?.flavor || "",
+                tactics: cls.info?.tactics || "",
                 base_stats: [0, 1, 2].map(tIdx => {
-                    const hp = Array.isArray(cls.stats?.hp) ? cls.stats.hp[tIdx] : (cls.stats?.hp ?? 10);
-                    const evade = Array.isArray(cls.stats?.evade) ? cls.stats.evade[tIdx] : (cls.stats?.evade ?? 8);
-                    const edef = Array.isArray(cls.stats?.edef) ? cls.stats.edef[tIdx] : (cls.stats?.edef ?? 8);
-                    const save = Array.isArray(cls.stats?.save) ? cls.stats.save[tIdx] : (cls.stats?.save ?? 10);
+                    const pickStat = (val, fallback) => Array.isArray(val) ? (val[tIdx] ?? val[val.length - 1] ?? fallback) : (typeof val === "number" ? val : fallback);
                     let size = 1;
                     if (Array.isArray(cls.stats?.size)) {
-                        const sVal = cls.stats.size[tIdx];
+                        const sVal = cls.stats.size[tIdx] ?? cls.stats.size[0];
                         size = Array.isArray(sVal) ? sVal[0] : sVal;
                     } else if (typeof cls.stats?.size === "number" || typeof cls.stats?.size === "string") {
                         size = cls.stats.size;
                     }
                     return {
-                        hp,
-                        armor: typeof cls.stats?.armor === "number" ? cls.stats.armor : 0,
-                        evasion: evade,
-                        edef,
-                        heatcap: typeof cls.stats?.heatcap === "number" ? cls.stats.heatcap : (cls.stats?.heatcap?.[tIdx] ?? 6),
-                        speed: typeof cls.stats?.speed === "number" ? cls.stats.speed : (cls.stats?.speed?.[tIdx] ?? 4),
-                        sensor_range: typeof cls.stats?.sensor === "number" ? cls.stats.sensor : (cls.stats?.sensor?.[tIdx] ?? 8),
-                        save,
-                        size,
-                        activations: typeof cls.stats?.activations === "number" ? cls.stats.activations : (cls.stats?.activations?.[tIdx] ?? 1),
-                        structure: 4,
-                        stress: 4
+                        hp: pickStat(cls.stats?.hp, 10),
+                        armor: pickStat(cls.stats?.armor, 0),
+                        evasion: pickStat(cls.stats?.evade ?? cls.stats?.evasion, 8),
+                        edef: pickStat(cls.stats?.edef, 8),
+                        heatcap: pickStat(cls.stats?.heatcap, 6),
+                        speed: pickStat(cls.stats?.speed, 4),
+                        sensor_range: pickStat(cls.stats?.sensor ?? cls.stats?.sensor_range, 8),
+                        save: pickStat(cls.stats?.save, 10),
+                        hull: pickStat(cls.stats?.hull, 0),
+                        agi: pickStat(cls.stats?.agility ?? cls.stats?.agi, 0),
+                        sys: pickStat(cls.stats?.systems ?? cls.stats?.sys, 0),
+                        eng: pickStat(cls.stats?.engineering ?? cls.stats?.eng, 0),
+                        size: Number(size) >= 1 ? Math.floor(Number(size)) : 0.5,
+                        activations: pickStat(cls.stats?.activations, 1),
+                        structure: pickStat(cls.stats?.structure, 1),
+                        stress: pickStat(cls.stats?.stress, 1)
                     };
                 }),
                 base_features: cls.base_features || [],
@@ -2584,6 +2674,39 @@ export async function importDirectlyToCustomCompendium({ translated, onProgress 
     // 3. Features
     for (const feat of features)
     {
+        let unpackedDamage = [];
+        if (feat.type === "Weapon" && Array.isArray(feat.damage) && feat.damage.length)
+        {
+            if (Array.isArray(feat.damage[0]))
+            {
+                unpackedDamage = feat.damage;
+            }
+            else
+            {
+                for (let tIdx = 0; tIdx < 3; tIdx++)
+                {
+                    const tierDmg = [];
+                    for (const d of feat.damage)
+                    {
+                        if (!d || typeof d !== "object") continue;
+                        const arr = Array.isArray(d.damage) ? d.damage : [d.val ?? d.damage ?? "0"];
+                        if (arr.length > tIdx)
+                        {
+                            tierDmg.push({ type: d.type || "Kinetic", val: String(arr[tIdx] ?? "0") });
+                        }
+                    }
+                    if (tierDmg.length) unpackedDamage.push(tierDmg);
+                }
+            }
+        }
+
+        const unpackedTags = (Array.isArray(feat.tags) ? feat.tags : [])
+            .map(t => ({ lid: t?.lid || t?.id || "", val: String(t?.val ?? "") }))
+            .filter(t => t.lid);
+
+        const unpackedRange = (Array.isArray(feat.range) ? feat.range : [])
+            .map(r => ({ type: r?.type || "Range", val: String(r?.val ?? "") }));
+
         const itemData = {
             name: feat.name,
             type: "npc_feature",
@@ -2593,14 +2716,16 @@ export async function importDirectlyToCustomCompendium({ translated, onProgress 
                 effect: feat.effect || "",
                 type: feat.type || "Trait",
                 origin: feat.origin || {},
-                tags: feat.tags || [],
-                bonuses: feat.bonuses || [],
+                tags: unpackedTags,
+                bonuses: feat.__npc_bonuses || feat.bonuses || [],
                 bonus: feat.bonus || null,
                 override: feat.override || null,
-                damage: feat.damage || [],
-                range: feat.range || [],
-                attack_bonus: feat.attack_bonus || [0, 0, 0],
-                accuracy: feat.accuracy || [0, 0, 0]
+                damage: unpackedDamage,
+                range: unpackedRange,
+                on_hit: feat.on_hit || "",
+                weapon_type: feat.weapon_type || "Rifle",
+                attack_bonus: Array.isArray(feat.attack_bonus) ? feat.attack_bonus : [0, 0, 0],
+                accuracy: Array.isArray(feat.accuracy) ? feat.accuracy : [0, 0, 0]
             },
             flags: {
                 [MODULE_ID]: pureData[feat.id] ? { v3: flagFor(pureData[feat.id]) } : {},
@@ -2648,56 +2773,73 @@ export async function importV3LcpFile(file, options = {})
 
     if (api)
     {
-        let blob = file;
-        if (!summary.alreadyV2 && translated.blob)
-        {
-            blob = translated.blob;
-        }
-        const arrayBuf = await blob.arrayBuffer();
-        const contentPack = await api.parseContentPack(arrayBuf);
-
-        const pack = `${manifest.name ?? ""} ${manifest.version ?? ""}`.trim();
-        const flagFor = pure => ({ pack, entries: Object.entries(pure).map(([path, data]) => ({ path, data })) });
-
-        const stampCreate = (document, data) =>
-        {
-            const pure = pureData?.[data?.system?.lid ?? document.system?.lid];
-            if (pure)
-            {
-                document.updateSource({
-                    [`flags.${MODULE_ID}.v3`]: flagFor(pure),
-                    [`flags.${CREATOR_MODULE_ID}.v3`]: flagFor(pure)
-                });
-            }
-        };
-        const stampUpdate = (document, changes) =>
-        {
-            const pure = pureData?.[document.system?.lid];
-            if (pure)
-            {
-                foundry.utils.setProperty(changes, `flags.${MODULE_ID}.==v3`, flagFor(pure));
-                foundry.utils.setProperty(changes, `flags.${CREATOR_MODULE_ID}.==v3`, flagFor(pure));
-            }
-        };
-        const createHookId = Hooks.on("preCreateItem", stampCreate);
-        const updateHookId = Hooks.on("preUpdateItem", stampUpdate);
         try
         {
-            await api.importCP(contentPack, (done, total) =>
+            let blob = file;
+            if (!summary.alreadyV2 && translated.blob)
             {
-                if (onProgress && total) onProgress(done, total);
-            });
+                blob = translated.blob;
+            }
+            const arrayBuf = await blob.arrayBuffer();
+            const contentPack = await api.parseContentPack(arrayBuf);
+
+            const pack = `${manifest.name ?? ""} ${manifest.version ?? ""}`.trim();
+            const flagFor = pure => ({ pack, entries: Object.entries(pure).map(([path, data]) => ({ path, data })) });
+
+            const stampCreate = (document, data) =>
+            {
+                const pure = pureData?.[data?.system?.lid ?? document.system?.lid];
+                if (pure)
+                {
+                    document.updateSource({
+                        [`flags.${MODULE_ID}.v3`]: flagFor(pure),
+                        [`flags.${CREATOR_MODULE_ID}.v3`]: flagFor(pure)
+                    });
+                }
+            };
+            const stampUpdate = (document, changes) =>
+            {
+                const pure = pureData?.[document.system?.lid];
+                if (pure)
+                {
+                    foundry.utils.setProperty(changes, `flags.${MODULE_ID}.==v3`, flagFor(pure));
+                    foundry.utils.setProperty(changes, `flags.${CREATOR_MODULE_ID}.==v3`, flagFor(pure));
+                }
+            };
+            const createHookId = Hooks.on("preCreateItem", stampCreate);
+            const updateHookId = Hooks.on("preUpdateItem", stampUpdate);
+            try
+            {
+                await api.importCP(contentPack, (done, total) =>
+                {
+                    if (onProgress && total) onProgress(done, total);
+                });
+            }
+            finally
+            {
+                Hooks.off("preCreateItem", createHookId);
+                Hooks.off("preUpdateItem", updateHookId);
+            }
+
+            // Se o compêndio customizado também tiver itens antigos com o mesmo LID, atualizá-los para evitar sombras desatualizadas
+            const customPack = game.packs.get("lancer-npc-creator.custom-npc-features");
+            if (customPack && customPack.index?.size > 0)
+            {
+                try {
+                    await importDirectlyToCustomCompendium({ translated });
+                } catch (syncErr) {
+                    console.warn("lancer-npc-creator | Aviso ao sincronizar compêndio customizado:", syncErr);
+                }
+            }
+
+            return { success: true, manifest, summary, method: "system" };
         }
-        finally
+        catch (sysErr)
         {
-            Hooks.off("preCreateItem", createHookId);
-            Hooks.off("preUpdateItem", updateHookId);
+            console.warn("lancer-npc-creator | Falha na importação via sistema Lancer, usando fallback de compêndio customizado:", sysErr);
         }
-        return { success: true, manifest, summary, method: "system" };
     }
-    else
-    {
-        const res = await importDirectlyToCustomCompendium({ translated, onProgress });
-        return { success: true, manifest, summary, method: "custom-compendium", details: res };
-    }
+
+    const res = await importDirectlyToCustomCompendium({ translated, onProgress });
+    return { success: true, manifest, summary, method: "custom-compendium", details: res };
 }
